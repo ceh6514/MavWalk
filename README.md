@@ -48,3 +48,10 @@ npm run dev
 Your terminal will show you a local URL, usually http://localhost:5173. Open this URL in your web browser to see the application.
 
 IMPORTANT: For the frontend to work correctly, you must also have the backend server running at the same time. Open a separate terminal window, navigate to the backend folder, and run node server.js.
+
+
+
+TL:DR
+Start backend server in one terminal window via entering "npm install" in the terminal while you are in the "backend" folder, then when it is done, enter "node server.js"
+Then start frontend server by also doing "npm install" but in the frontend->src folder, (technically frontend/src), then entering in "npm run dev" NOTE: Do this in another window of terminal
+Then when those are both up, go into http://localhost:5173 and you will see it working!
