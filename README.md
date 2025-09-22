@@ -27,7 +27,6 @@ The server is now running and ready to accept API requests from your frontend ap
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-MavWalk Frontend
 This is the frontend for the MavWalk application, built with React and Vite.
 
 Setup Instructions
