@@ -4,27 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MavWalk - Campus Safety</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Custom UTA Color Theme for Tailwind
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              uta: {
-                blue: '#00549A',
-                orange: '#F58025',
-                'blue-light': '#0078C1',
-              }
-            }
-          }
-        }
-      }
+      tailwind.config = { theme: { extend: { colors: { uta: { blue: '#00549A', orange: '#F58025', 'blue-light': '#0078C1' } } } } }
     </script>
+    
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- --- THE FIRST FIX --- -->
+    <!-- This CSS ensures that the app's container can be 100% of the screen height. -->
     <style>
-      body {
+      html, body, #root {
+        height: 100%;
+        margin: 0;
+        padding: 0;
         font-family: 'Inter', sans-serif;
       }
     </style>
@@ -34,3 +33,4 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+

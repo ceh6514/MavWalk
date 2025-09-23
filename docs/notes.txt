@@ -1,0 +1,15 @@
+-Currently works pretty well
+
+-Locations seem to be randomized
+
+-Needs to be full screened
+
+-Straight diagonal
+
+-No matching algorithm
+
+-Bare bones
+
+-UI is not super responsive
+
+-Not getting correct student id when pulling it into S.O.S notification
