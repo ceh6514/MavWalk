@@ -2,9 +2,10 @@
 An application made to empower every UTA student to navigate campus with confidence and peace of mind by instantly connecting them with a trusted network of student and officer walking partners.
 Engineers: Cleona Hua, Jaafar Alumary, Paul Dang, Saina Shrestha
 
-
+To run the web-app (First time setup)
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-This is the backend server for the MavWalk application, built with Node.js and Express.
+1) Set up Backend Server
+This is how to use the backend server for the MavWalk application, built with Node.js and Express.
 
 Setup Instructions
 Install Node.js: If you don't have it, download and install Node.js from nodejs.org.
@@ -22,12 +23,10 @@ You should see a message confirming that the server is running:
 
 MavWalk server listening at http://localhost:3001
 
-The server is now running and ready to accept API requests from your frontend application.
-
-
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-This is the frontend for the MavWalk application, built with React and Vite.
+2) Set up Frontend Server
+This is how to use the frontend for the MavWalk application, built with React and Vite.
 
 Setup Instructions
 Install Node.js: If you don't already have it, download and install Node.js from nodejs.org. This will also install npm.
@@ -50,8 +49,11 @@ Your terminal will show you a local URL, usually http://localhost:5173. Open thi
 IMPORTANT: For the frontend to work correctly, you must also have the backend server running at the same time. Open a separate terminal window, navigate to the backend folder, and run node server.js.
 
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3) Go to http://localhost:5173
+
 
 TL:DR
 Start backend server in one terminal window via entering "npm install" in the terminal while you are in the "backend" folder, then when it is done, enter "node server.js"
-Then start frontend server by also doing "npm install" but in the frontend->src folder, (technically frontend/src), then entering in "npm run dev" NOTE: Do this in another window of terminal
-Then when those are both up, go into http://localhost:5173 and you will see it working!
+Then start frontend server by also doing "npm install" but in the frontend->src folder (technically frontend/src), then entering "npm run dev" NOTE: Do this in another window of the terminal
+Then, when those are both up, go into http://localhost:5173 and you will see it working!
