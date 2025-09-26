@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 //Import useMap hook
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
-
+import MavwalkIcon from './MavWalk Icon.png';
 //Icon fix
 //Need to change w/ Saina's logo
 delete L.Icon.Default.prototype._getIconUrl;
@@ -33,9 +33,114 @@ const MessageBox = ({ message, type }) => { if (!message) return null; const bas
 
 //Page componenets
 const LoginPage = ({ onLogin }) => {
-    const [email, setEmail] = useState('jdoe@uta.edu'); const [password, setPassword] = useState('password123'); const [error, setError] = useState(''); const [loading, setLoading] = useState(false); const handleSubmit = async (e) => { e.preventDefault(); setLoading(true); setError(''); try { const response = await fetch(`${API_URL}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }), }); const data = await response.json(); if (response.ok) { onLogin(data.user); } else { setError(data.message || 'Login failed.'); } } catch (err) { setError('Could not connect to the server. Is it running?'); } finally { setLoading(false); } };
-    return (<div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center p-4"><div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg"><h1 className="text-4xl font-bold text-center text-uta-blue mb-2">MavWalk</h1><p className="text-center text-gray-600 mb-6">Safe walks, on demand.</p><form onSubmit={handleSubmit}><MessageBox message={error} type="error" /><div className="mb-4"><label className="block text-gray-700 font-medium mb-2" htmlFor="email">UTA Email</label><input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-uta-orange" required /></div><div className="mb-6"><label className="block text-gray-700 font-medium mb-2" htmlFor="password">Password</label><input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-uta-orange" required /></div><button type="submit" disabled={loading} className="w-full bg-uta-blue hover:bg-uta-blue-light text-white font-bold py-3 px-4 rounded-lg transition duration-300 disabled:bg-gray-400">{loading ? 'Logging In...' : 'Log In'}</button></form></div></div>);
+    const [email, setEmail] = useState('jdoe@uta.edu');
+    const [password, setPassword] = useState('password123');
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+            onLogin(data.user);
+        } else {
+            setError(data.message || 'Login failed.');
+        }
+        } catch (err) {
+        setError('Could not connect to the server. Is it running?');
+        } finally {
+        setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-uta-blue flex flex-col justify-center items-center px-4">
+            <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
+            {/* Logo */}
+            <div className="flex flex-col items-center mb-6">
+            <img
+                src={MavwalkIcon}
+                alt="MavWalk Logo"
+                className="w-28 h-28 mb-4"
+            />
+            <h1 className="text-3xl font-bold text-uta-blue">MavWalk</h1>
+            <p className="text-gray-600 text-sm">Safe Walks. Strong Mavericks.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+            <MessageBox message={error} type="error" />
+
+            {/* Username */}
+            <div>
+                <label htmlFor="email" className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                    Username
+                </label>
+                <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="student@mavs.uta.edu"
+                className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-uta-orange"
+                required
+                />
+            </div>
+
+            {/* Password */}
+            <div>
+                <label htmlFor="password" className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                    Password
+                </label>
+                <div className="relative">
+                <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••"
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-uta-orange"
+                    required
+                />
+                <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-3 text-sm font-semibold text-uta-blue"
+                >
+                    {showPassword ? 'HIDE' : 'SHOW'}
+                </button>
+                </div>
+            </div>
+
+            {/* Forgot password */}
+            <div className="text-center">
+                <button type="button" className="text-gray-600 text-xs hover:underline">
+                    Forgot Password?
+                </button>
+            </div>
+
+            {/* Submit */}
+            <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-uta-orange hover:opacity-90 text-white font-bold py-3 rounded-lg transition duration-300 disabled:bg-gray-400"
+            >
+                {loading ? 'Logging In...' : 'Sign Up'}
+            </button>
+            </form>
+        </div>
+    </div>
+  );
 };
+
 const RequestWalkPage = ({ user, setView }) => {
     const [startLocation, setStartLocation] = useState(''); const [destination, setDestination] = useState(''); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false);
     const handleSubmit = async (e) => { e.preventDefault(); setLoading(true); setMessage(''); try { const response = await fetch(`${API_URL}/walks`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, startLocation, destination }), }); if(response.ok) { alert('Your walk request has been submitted!'); setView({ name: 'home' }); } else { const data = await response.json(); setMessage(data.message || 'Failed to create request.'); } } catch(err) { setMessage('Could not connect to the server.'); } finally { setLoading(false); } };
