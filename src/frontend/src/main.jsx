@@ -147,11 +147,119 @@ const RequestWalkPage = ({ user, setView }) => {
     return (<div className="min-h-screen bg-gray-100 flex flex-col items-center p-4"><div className="w-full max-w-lg"><button onClick={() => setView({ name: 'home' })} className="text-uta-blue font-medium mb-4">&larr; Back to Home</button><div className="bg-white p-8 rounded-xl shadow-lg"><h2 className="text-2xl font-bold text-center text-uta-blue mb-6">Create a Walk Request</h2><form onSubmit={handleSubmit}><MessageBox message={message} type="error" /><div className="mb-4"><label className="block text-gray-700 font-medium mb-2" htmlFor="start">Start Location</label><input id="start" type="text" value={startLocation} onChange={(e) => setStartLocation(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-uta-orange" placeholder="e.g., The Library" required /></div><div className="mb-6"><label className="block text-gray-700 font-medium mb-2" htmlFor="destination">Destination</label><input id="destination" type="text" value={destination} onChange={(e) => setDestination(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-uta-orange" placeholder="e.g., Arlington Hall" required /></div><button type="submit" disabled={loading} className="w-full bg-uta-orange hover:opacity-90 text-white font-bold py-3 px-4 rounded-lg transition duration-300 disabled:bg-gray-400">{loading ? 'Submitting...' : 'Submit Request'}</button></form></div></div></div>);
 };
 const HomePage = ({ user, setView }) => {
-    const [walks, setWalks] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState('');
-    useEffect(() => { const fetchWalks = async () => { try { const response = await fetch(`${API_URL}/walks`); if (response.ok) { const data = await response.json(); setWalks(data); } else { setError('Failed to fetch walk requests.'); } } catch (err) { setError('Could not connect to the server.'); } finally { setLoading(false); } }; fetchWalks(); }, []);
-    const handleJoinWalk = async (walkId) => { try { const response = await fetch(`${API_URL}/walks/${walkId}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ buddyId: user.id }), }); const data = await response.json(); if (response.ok) { setView({ name: 'activeWalk', walkId: walkId }); } else { alert(`Error: ${data.message}`); } } catch (err) { alert("Failed to join walk. Please try again."); } };
-    return (<div className="min-h-screen bg-gray-50"><header className="bg-white shadow-md p-4 flex justify-between items-center"><h1 className="text-2xl font-bold text-uta-blue">MavWalk</h1><div className="text-right"><p className="font-medium">{user.name}</p><p className="text-sm text-gray-500">{user.email}</p></div></header><main className="p-6"><div className="max-w-4xl mx-auto"><button onClick={() => setView({ name: 'requestWalk' })} className="w-full text-lg bg-uta-orange hover:opacity-90 text-white font-bold py-4 px-4 rounded-lg shadow-lg transition duration-300 mb-8">Request a Walking Partner</button><h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Available Walk Requests</h2>{loading && <LoadingSpinner />}{error && <MessageBox message={error} type="error" />}{!loading && !error && walks.length === 0 && (<div className="text-center text-gray-500 bg-white p-6 rounded-lg shadow">No pending walk requests right now.</div>)}{<div className="space-y-4">{walks.map(walk => (<div key={walk.id} className="bg-white p-4 rounded-lg shadow-md flex justify-between items-center"><div><p className="font-bold text-lg">From: <span className="font-normal">{walk.startLocation}</span></p><p className="font-bold text-lg">To: <span className="font-normal">{walk.destination}</span></p><p className="text-sm text-gray-500">Requested: {new Date(walk.requestTime).toLocaleTimeString()}</p></div><button onClick={() => handleJoinWalk(walk.id)} className="bg-uta-blue hover:bg-uta-blue-light text-white font-bold py-2 px-5 rounded-lg transition duration-300">Join</button></div>))}</div>}</div></main></div>);
+  const [walks, setWalks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchWalks = async () => {
+      try {
+        const response = await fetch(`${API_URL}/walks`);
+        if (response.ok) {
+          const data = await response.json();
+          setWalks(data);
+        } else {
+          setError('Failed to fetch walk requests.');
+        }
+      } catch (err) {
+        setError('Could not connect to the server.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWalks();
+  }, []);
+
+  const handleJoinWalk = async (walkId) => {
+    try {
+      const response = await fetch(`${API_URL}/walks/${walkId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ buddyId: user.id }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setView({ name: 'activeWalk', walkId: walkId });
+      } else {
+        alert(`Error: ${data.message}`);
+      }
+    } catch (err) {
+      alert("Failed to join walk. Please try again.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-uta-blue flex flex-col">
+      {/* Header */}
+      <header className="bg-uta-blue text-white p-6 shadow-md flex justify-between items-center">
+        <div className="flex items-center space-x-3">
+          <img
+            src={MavwalkIcon}
+            alt=" MavWalkLogo"
+            className="w-10 h-10"
+          />
+          <h1 className="text-2xl font-bold">MavWalk</h1>
+        </div>
+        <div className="text-right">
+          <p className="font-semibold">{user.name}</p>
+          <p className="text-sm opacity-80">{user.email}</p>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="flex-grow p-6">
+        {/* Create Request Button */}
+        <button
+          onClick={() => setView({ name: 'requestWalk' })}
+          className="w-full text-lg bg-uta-orange hover:opacity-90 text-white font-bold py-4 px-4 rounded-lg shadow-lg transition duration-300 mb-6"
+        >
+          Request a Walking Partner
+        </button>
+
+        {/* Section: Walk Requests */}
+        <h2 className="text-xl font-semibold text-white border-b border-white/30 pb-2 mb-4">
+          Available Walk Requests
+        </h2>
+
+        {loading && <LoadingSpinner />}
+        {error && <MessageBox message={error} type="error" />}
+        {!loading && !error && walks.length === 0 && (
+          <div className="text-center text-white bg-uta-blue-light p-6 rounded-lg shadow">
+            No pending walk requests right now.
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {walks.map((walk) => (
+            <div
+              key={walk.id}
+              className="bg-white p-5 rounded-lg shadow-md flex justify-between items-center"
+            >
+              <div>
+                <p className="font-bold text-lg text-uta-blue">
+                  From: <span className="font-normal">{walk.startLocation}</span>
+                </p>
+                <p className="font-bold text-lg text-uta-blue">
+                  To: <span className="font-normal">{walk.destination}</span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  Requested: {new Date(walk.requestTime).toLocaleTimeString()}
+                </p>
+              </div>
+              <button
+                onClick={() => handleJoinWalk(walk.id)}
+                className="bg-uta-blue hover:bg-uta-blue-light text-white font-bold py-2 px-5 rounded-lg transition duration-300"
+              >
+                Join
+              </button>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
 };
+
 const WalkCompletePage = ({ walkId, setView }) => {
     const handleConfirm = async () => { try { await fetch(`${API_URL}/walks/${walkId}/complete`, { method: 'POST' }); } catch (err) { console.error("Failed to mark walk as complete."); } setView({ name: 'home' }); };
     return (<div className="min-h-screen bg-uta-blue flex flex-col justify-center items-center p-4"><div className="text-center"><h1 className="text-4xl font-bold text-white mb-6">You've Arrived Safely!</h1><button onClick={handleConfirm} className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-12 text-2xl rounded-lg shadow-2xl">Confirm Arrival</button></div></div>);
