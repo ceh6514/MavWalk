@@ -1,368 +1,312 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-//Import useMap hook
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
-import MavwalkIcon from './MavWalk Icon.png';
-//Icon fix
-//Need to change w/ Saina's logo
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+import 'leaflet/dist/leaflet.css';
+
+const campusLocations = [
+  'Central Library',
+  'College Park Center',
+  'Engineering Research Building',
+  'Fine Arts Building',
+  'Maverick Activities Center',
+  'Science Hall',
+  'University Center',
+];
+
+const locationCoordinates = {
+  'Central Library': [32.72991314809259, -97.11290672883602],
+  'College Park Center': [32.730652363101214, -97.10803828570232],
+  'Engineering Research Building': [32.73344190653296, -97.11322886238746],
+  'Fine Arts Building': [32.73050397086501, -97.11513947404578],
+  'Maverick Activities Center': [32.73195397555977, -97.11691204643674],
+  'Science Hall': [32.73048850678233, -97.11365621515012],
+  'University Center': [32.73166137076197, -97.11099924459786],
+};
+
+const kindnessMessages = [
+  'Hope you have a great day!',
+  'You are beautifully unique!',
+  'You bring so much light to campus—thanks for being you!',
+  "There's a Maverick out there smiling because of you.",
+  'Take a deep breath—you are exactly where you need to be.',
+];
+
+const predefinedRoutes = {};
+
+const defaultMarkerIcon = new L.Icon({
+  iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url).href,
+  iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).href,
+  shadowUrl: new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).href,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
 });
 
-//Creation of the helper function
-//This tiny component gets the map instance and tells it to update its size, fixing the gray tile issue we kept getting
-//Still have gray tile issues, but just resize page
-function InvalidateSizeComponent() {
-  const map = useMap();
-  useEffect(() => {
-    map.invalidateSize();
-  }, [map]);
-  return null;
-}
+L.Marker.prototype.options.icon = defaultMarkerIcon;
 
-//URL
-const API_URL = 'http://localhost:3001/api';
+const getRouteCoordinates = (start, destination) => {
+  const routeKey = `${start}|${destination}`;
+  if (predefinedRoutes[routeKey]) {
+    return predefinedRoutes[routeKey];
+  }
 
-//Reusable components
-const LoadingSpinner = () => (<div className="flex justify-center items-center p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-uta-orange"></div></div>);
-const MessageBox = ({ message, type }) => { if (!message) return null; const baseClasses = 'p-4 rounded-md text-center mb-4'; const typeClasses = type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'; return <div className={`${baseClasses} ${typeClasses}`}>{message}</div>;};
+  const startCoords = locationCoordinates[start];
+  const destinationCoords = locationCoordinates[destination];
 
-//Page componenets
-const LoginPage = ({ onLogin }) => {
-    const [email, setEmail] = useState('jdoe@uta.edu');
-    const [password, setPassword] = useState('password123');
-    const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+  if (!startCoords || !destinationCoords) {
+    return [];
+  }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        try {
-        const response = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
-        const data = await response.json();
-        if (response.ok) {
-            onLogin(data.user);
-        } else {
-            setError(data.message || 'Login failed.');
-        }
-        } catch (err) {
-        setError('Could not connect to the server. Is it running?');
-        } finally {
-        setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-uta-blue flex flex-col justify-center items-center px-4">
-            <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-            {/* Logo */}
-            <div className="flex flex-col items-center mb-6">
-            <img
-                src={MavwalkIcon}
-                alt="MavWalk Logo"
-                className="w-28 h-28 mb-4"
-            />
-            <h1 className="text-3xl font-bold text-uta-blue">MavWalk</h1>
-            <p className="text-gray-600 text-sm">Safe Walks. Strong Mavericks.</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-            <MessageBox message={error} type="error" />
-
-            {/* Username */}
-            <div>
-                <label htmlFor="email" className="block text-xs font-bold text-gray-600 uppercase mb-1">
-                    Username
-                </label>
-                <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@mavs.uta.edu"
-                className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-uta-orange"
-                required
-                />
-            </div>
-
-            {/* Password */}
-            <div>
-                <label htmlFor="password" className="block text-xs font-bold text-gray-600 uppercase mb-1">
-                    Password
-                </label>
-                <div className="relative">
-                <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••"
-                    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-uta-orange"
-                    required
-                />
-                <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-3 text-sm font-semibold text-uta-blue"
-                >
-                    {showPassword ? 'HIDE' : 'SHOW'}
-                </button>
-                </div>
-            </div>
-
-            {/* Forgot password */}
-            <div className="text-center">
-                <button type="button" className="text-gray-600 text-xs hover:underline">
-                    Forgot Password?
-                </button>
-            </div>
-
-            {/* Submit */}
-            <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-uta-orange hover:opacity-90 text-white font-bold py-3 rounded-lg transition duration-300 disabled:bg-gray-400"
-            >
-                {loading ? 'Logging In...' : 'Sign Up'}
-            </button>
-            </form>
-        </div>
-    </div>
-  );
+  return [startCoords, destinationCoords];
 };
 
-const RequestWalkPage = ({ user, setView }) => {
-    const [startLocation, setStartLocation] = useState(''); const [destination, setDestination] = useState(''); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false);
-    const handleSubmit = async (e) => { e.preventDefault(); setLoading(true); setMessage(''); try { const response = await fetch(`${API_URL}/walks`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, startLocation, destination }), }); if(response.ok) { alert('Your walk request has been submitted!'); setView({ name: 'home' }); } else { const data = await response.json(); setMessage(data.message || 'Failed to create request.'); } } catch(err) { setMessage('Could not connect to the server.'); } finally { setLoading(false); } };
-    return (<div className="min-h-screen bg-gray-100 flex flex-col items-center p-4"><div className="w-full max-w-lg"><button onClick={() => setView({ name: 'home' })} className="text-uta-blue font-medium mb-4">&larr; Back to Home</button><div className="bg-white p-8 rounded-xl shadow-lg"><h2 className="text-2xl font-bold text-center text-uta-blue mb-6">Create a Walk Request</h2><form onSubmit={handleSubmit}><MessageBox message={message} type="error" /><div className="mb-4"><label className="block text-gray-700 font-medium mb-2" htmlFor="start">Start Location</label><input id="start" type="text" value={startLocation} onChange={(e) => setStartLocation(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-uta-orange" placeholder="e.g., The Library" required /></div><div className="mb-6"><label className="block text-gray-700 font-medium mb-2" htmlFor="destination">Destination</label><input id="destination" type="text" value={destination} onChange={(e) => setDestination(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-uta-orange" placeholder="e.g., Arlington Hall" required /></div><button type="submit" disabled={loading} className="w-full bg-uta-orange hover:opacity-90 text-white font-bold py-3 px-4 rounded-lg transition duration-300 disabled:bg-gray-400">{loading ? 'Submitting...' : 'Submit Request'}</button></form></div></div></div>);
-};
-const HomePage = ({ user, setView }) => {
-  const [walks, setWalks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const App = () => {
+  const [screen, setScreen] = useState('home');
+  const [startLocation, setStartLocation] = useState('');
+  const [destination, setDestination] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [selectedMessage, setSelectedMessage] = useState('');
+  const [selectedRoute, setSelectedRoute] = useState(null);
 
-  useEffect(() => {
-    const fetchWalks = async () => {
-      try {
-        const response = await fetch(`${API_URL}/walks`);
-        if (response.ok) {
-          const data = await response.json();
-          setWalks(data);
-        } else {
-          setError('Failed to fetch walk requests.');
-        }
-      } catch (err) {
-        setError('Could not connect to the server.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchWalks();
-  }, []);
+  const handleFindRoute = (event) => {
+    event.preventDefault();
 
-  const handleJoinWalk = async (walkId) => {
-    try {
-      const response = await fetch(`${API_URL}/walks/${walkId}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buddyId: user.id }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setView({ name: 'activeWalk', walkId: walkId });
-      } else {
-        alert(`Error: ${data.message}`);
-      }
-    } catch (err) {
-      alert("Failed to join walk. Please try again.");
+    if (!startLocation || !destination) {
+      setFeedback('Please select both a starting point and destination to continue.');
+      return;
     }
+
+    if (startLocation === destination) {
+      setFeedback('Choose two different locations to discover a new route.');
+      return;
+    }
+
+    const coordinates = getRouteCoordinates(startLocation, destination);
+
+    if (!coordinates.length) {
+      setFeedback("We don't have a curated route for that pair just yet, but we're working on it!");
+      return;
+    }
+
+    const message = kindnessMessages[Math.floor(Math.random() * kindnessMessages.length)];
+
+    setSelectedRoute({
+      start: startLocation,
+      destination,
+      coordinates,
+    });
+    setSelectedMessage(message);
+    setFeedback('');
+    setScreen('message');
   };
 
-  return (
-    <div className="min-h-screen bg-uta-blue flex flex-col">
-      {/* Header */}
-      <header className="bg-uta-blue text-white p-6 shadow-md flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-          <img
-            src={MavwalkIcon}
-            alt=" MavWalkLogo"
-            className="w-10 h-10"
-          />
-          <h1 className="text-2xl font-bold">MavWalk</h1>
-        </div>
-        <div className="text-right">
-          <p className="font-semibold">{user.name}</p>
-          <p className="text-sm opacity-80">{user.email}</p>
-        </div>
-      </header>
+  const handleContinueToMap = () => {
+    setScreen('map');
+  };
 
-      {/* Main content */}
-      <main className="flex-grow p-6">
-        {/* Create Request Button */}
+  const handleResetJourney = () => {
+    setScreen('home');
+    setStartLocation('');
+    setDestination('');
+    setSelectedRoute(null);
+    setSelectedMessage('');
+    setFeedback('');
+  };
+
+  const mapCenter = useMemo(() => {
+    if (!selectedRoute || !selectedRoute.coordinates.length) {
+      return { lat: 32.7312, lng: -97.112 }; // UTA campus center fallback
+    }
+
+    const total = selectedRoute.coordinates.reduce(
+      (accumulator, [lat, lng]) => {
+        return {
+          lat: accumulator.lat + lat,
+          lng: accumulator.lng + lng,
+        };
+      },
+      { lat: 0, lng: 0 }
+    );
+
+    return {
+      lat: total.lat / selectedRoute.coordinates.length,
+      lng: total.lng / selectedRoute.coordinates.length,
+    };
+  }, [selectedRoute]);
+
+  const renderHeader = (subtitle) => (
+    <header className="text-center space-y-4">
+      <div className="mx-auto w-20 h-20 rounded-full bg-uta-blue flex items-center justify-center text-white text-3xl font-bold">
+        MW
+      </div>
+
+      <div className="space-y-1">
+        <h1 className="text-4xl font-extrabold text-uta-blue tracking-tight">MavWalk</h1>
+        <p className="text-uta-orange font-semibold uppercase text-sm tracking-[0.4em]">Kind Routes for Mavericks</p>
+        {subtitle && <p className="text-gray-600 text-base">{subtitle}</p>}
+      </div>
+    </header>
+  );
+
+  const renderHomeScreen = () => (
+    <div className="w-full max-w-xl bg-white shadow-2xl rounded-3xl p-10 space-y-8">
+      {renderHeader('Pick your starting point and destination to uncover a campus walk paired with a kind message.')}
+
+      <form className="space-y-6" onSubmit={handleFindRoute}>
+        <div className="space-y-2">
+          <label htmlFor="startLocation" className="block text-sm font-semibold text-uta-blue uppercase tracking-wider">
+            Starting From
+          </label>
+          <select
+            id="startLocation"
+            value={startLocation}
+            onChange={(event) => setStartLocation(event.target.value)}
+            className="w-full appearance-none rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-base text-uta-blue focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40"
+          >
+            <option value="">Select a location</option>
+            {campusLocations.map((location) => (
+              <option key={`start-${location}`} value={location}>
+                {location}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="destination" className="block text-sm font-semibold text-uta-blue uppercase tracking-wider">
+            Destination
+          </label>
+          <select
+            id="destination"
+            value={destination}
+            onChange={(event) => setDestination(event.target.value)}
+            className="w-full appearance-none rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-base text-uta-blue focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40"
+          >
+            <option value="">Select a location</option>
+            {campusLocations.map((location) => (
+              <option key={`destination-${location}`} value={location}>
+                {location}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <button
-          onClick={() => setView({ name: 'requestWalk' })}
-          className="w-full text-lg bg-uta-orange hover:opacity-90 text-white font-bold py-4 px-4 rounded-lg shadow-lg transition duration-300 mb-6"
+          type="submit"
+          className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
         >
-          Request a Walking Partner
+          Find My Route
         </button>
+      </form>
 
-        {/* Section: Walk Requests */}
-        <h2 className="text-xl font-semibold text-white border-b border-white/30 pb-2 mb-4">
-          Available Walk Requests
-        </h2>
+      {feedback && (
+        <div className="rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-center text-uta-blue">{feedback}</div>
+      )}
 
-        {loading && <LoadingSpinner />}
-        {error && <MessageBox message={error} type="error" />}
-        {!loading && !error && walks.length === 0 && (
-          <div className="text-center text-white bg-uta-blue-light p-6 rounded-lg shadow">
-            No pending walk requests right now.
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {walks.map((walk) => (
-            <div
-              key={walk.id}
-              className="bg-white p-5 rounded-lg shadow-md flex justify-between items-center"
-            >
-              <div>
-                <p className="font-bold text-lg text-uta-blue">
-                  From: <span className="font-normal">{walk.startLocation}</span>
-                </p>
-                <p className="font-bold text-lg text-uta-blue">
-                  To: <span className="font-normal">{walk.destination}</span>
-                </p>
-                <p className="text-sm text-gray-500">
-                  Requested: {new Date(walk.requestTime).toLocaleTimeString()}
-                </p>
-              </div>
-              <button
-                onClick={() => handleJoinWalk(walk.id)}
-                className="bg-uta-blue hover:bg-uta-blue-light text-white font-bold py-2 px-5 rounded-lg transition duration-300"
-              >
-                Join
-              </button>
-            </div>
-          ))}
-        </div>
-      </main>
+      <footer className="text-center text-sm text-gray-400">
+        Routes and kind messages are curated just for Mavericks—more coming soon!
+      </footer>
     </div>
   );
-};
 
-const WalkCompletePage = ({ walkId, setView }) => {
-    const handleConfirm = async () => { try { await fetch(`${API_URL}/walks/${walkId}/complete`, { method: 'POST' }); } catch (err) { console.error("Failed to mark walk as complete."); } setView({ name: 'home' }); };
-    return (<div className="min-h-screen bg-uta-blue flex flex-col justify-center items-center p-4"><div className="text-center"><h1 className="text-4xl font-bold text-white mb-6">You've Arrived Safely!</h1><button onClick={handleConfirm} className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-12 text-2xl rounded-lg shadow-2xl">Confirm Arrival</button></div></div>);
-};
+  const renderMessageScreen = () => (
+    <div className="w-full max-w-xl bg-white shadow-2xl rounded-3xl p-10 space-y-10">
+      {renderHeader('Take in a quick moment of kindness before you set out on your walk.')}
 
-const ActiveWalkPage = ({ walkId, setView }) => {
-    const [walk, setWalk] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        const fetchWalkData = async () => {
-            try {
-                const response = await fetch(`${API_URL}/walks/${walkId}`);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-                setWalk(data);
-            } catch (err) {
-                setError('Could not load walk details.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchWalkData();
-        const interval = setInterval(fetchWalkData, 5000);
-        return () => clearInterval(interval);
-    }, [walkId]);
-
-    const handleSOS = async () => {
-        if (window.confirm("Are you sure? This will alert campus police immediately.")) {
-            try {
-                const response = await fetch(`${API_URL}/walks/${walkId}/sos`, { method: 'POST' });
-                const data = await response.json();
-                alert(data.message);
-            } catch(err){
-                alert('SOS signal failed to send! Please call 911.');
-            }
-        }
-    };
-    
-    useEffect(() => {
-        if (walk) {
-            const [buddyLat, buddyLon] = walk.route.buddyCurrentCoords;
-            const [endLat, endLon] = walk.route.endCoords;
-            const distance = Math.sqrt(Math.pow(buddyLat - endLat, 2) + Math.pow(buddyLon - endLon, 2));
-            if (distance < 0.0001) {
-                 setView({ name: 'walkComplete', walkId: walkId });
-            }
-        }
-    }, [walk]);
-
-    if (loading) return <div className="min-h-screen flex justify-center items-center"><LoadingSpinner /></div>;
-    if (error) return <div className="min-h-screen flex justify-center items-center"><MessageBox message={error} type="error" /></div>;
-    if (!walk) return null;
-
-    return (
-        <div className="h-screen bg-gray-50 flex flex-col">
-            <header className="bg-white shadow-md p-4 text-center z-10">
-                <p className="font-medium text-lg text-gray-700">Estimated Arrival Time</p>
-                <h1 className="text-4xl font-bold text-uta-blue">{walk.eta}</h1>
-                <p className="text-gray-600 mt-1">From {walk.startLocation} to {walk.destination}</p>
-            </header>
-            
-            <main className="flex-grow">
-                <MapContainer center={walk.route.startCoords} zoom={15} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
-                    {/*Add the component inside the map*/}
-                    <InvalidateSizeComponent />
-                    <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <Marker position={walk.route.startCoords}><Popup>Start</Popup></Marker>
-                    <Marker position={walk.route.endCoords}><Popup>Destination</Popup></Marker>
-                    <Marker position={walk.route.buddyCurrentCoords}><Popup>Your Buddy</Popup></Marker>
-                    <Polyline positions={[walk.route.startCoords, walk.route.endCoords]} color="blue" />
-                </MapContainer>
-            </main>
-
-            <footer className="p-4 bg-white border-t z-10">
-                <button onClick={handleSOS} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-lg py-4 px-4 rounded-lg shadow-lg">
-                    S.O.S.
-                </button>
-            </footer>
+      <div className="space-y-6">
+        <div className="rounded-3xl border border-uta-orange/20 bg-uta-orange/10 p-8 text-center">
+          <p className="text-2xl font-semibold text-uta-blue leading-relaxed">“{selectedMessage}”</p>
         </div>
-    );
-};
 
+        {selectedRoute && (
+          <div className="rounded-3xl bg-uta-blue/5 p-6 text-center text-uta-blue">
+            <p className="text-sm font-semibold uppercase tracking-wider text-uta-orange mb-1">Your Upcoming Walk</p>
+            <p className="text-lg font-bold">
+              {selectedRoute.start} → {selectedRoute.destination}
+            </p>
+          </div>
+        )}
+      </div>
 
-//Main app component
-const App = () => {
-    const [view, setView] = useState({ name: 'login' }); 
-    const [user, setUser] = useState(null); 
-    const handleLogin = (loggedInUser) => { setUser(loggedInUser); setView({ name: 'home' }); };
-    const renderView = () => {
-        switch (view.name) {
-            case 'home': return <HomePage user={user} setView={setView} />;
-            case 'requestWalk': return <RequestWalkPage user={user} setView={setView} />;
-            case 'activeWalk': return <ActiveWalkPage walkId={view.walkId} setView={setView} />;
-            case 'walkComplete': return <WalkCompletePage walkId={view.walkId} setView={setView} />;
-            default: return <LoginPage onLogin={handleLogin} />;
-        }
-    };
-    return <div className="App h-full">{renderView()}</div>;
+      <button
+        type="button"
+        onClick={handleContinueToMap}
+        className="w-full rounded-2xl bg-uta-blue px-5 py-3 text-lg font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-blue/40"
+      >
+        Continue to Map
+      </button>
+    </div>
+  );
+
+  const renderMapScreen = () => (
+    <div className="w-full max-w-3xl bg-white shadow-2xl rounded-3xl p-8 space-y-8">
+      {renderHeader('Follow the highlighted path to enjoy your Maverick walk!')}
+
+      {selectedRoute && (
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-3xl bg-uta-blue/5 p-6 text-uta-blue">
+              <p className="text-sm font-semibold uppercase tracking-wider text-uta-orange mb-1">Starting From</p>
+              <p className="text-lg font-bold">{selectedRoute.start}</p>
+            </div>
+            <div className="rounded-3xl bg-uta-blue/5 p-6 text-uta-blue">
+              <p className="text-sm font-semibold uppercase tracking-wider text-uta-orange mb-1">Destination</p>
+              <p className="text-lg font-bold">{selectedRoute.destination}</p>
+            </div>
+          </div>
+
+          <div className="h-96 w-full overflow-hidden rounded-3xl">
+            <MapContainer
+              key={`${selectedRoute.start}-${selectedRoute.destination}`}
+              center={mapCenter}
+              zoom={17}
+              scrollWheelZoom={false}
+              className="h-full w-full"
+            >
+              <TileLayer
+                attribution="&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Polyline positions={selectedRoute.coordinates} pathOptions={{ color: '#f97316', weight: 6 }} />
+              <Marker position={selectedRoute.coordinates[0]}>
+                <span className="hidden">Start</span>
+              </Marker>
+              <Marker position={selectedRoute.coordinates[selectedRoute.coordinates.length - 1]}>
+                <span className="hidden">Destination</span>
+              </Marker>
+            </MapContainer>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-between">
+        <button
+          type="button"
+          onClick={handleResetJourney}
+          className="w-full sm:w-auto rounded-2xl border border-uta-blue/20 px-5 py-3 text-base font-semibold uppercase tracking-wider text-uta-blue transition duration-200 hover:border-uta-blue hover:text-uta-blue"
+        >
+          Start a New Route
+        </button>
+        <button
+          type="button"
+          onClick={handleResetJourney}
+          className="w-full sm:w-auto rounded-2xl bg-uta-orange px-5 py-3 text-base font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/40"
+        >
+          I've Arrived
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-uta-blue via-white to-uta-orange flex items-center justify-center px-4 py-12">
+      {screen === 'home' && renderHomeScreen()}
+      {screen === 'message' && renderMessageScreen()}
+      {screen === 'map' && renderMapScreen()}
+    </div>
+  );
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
