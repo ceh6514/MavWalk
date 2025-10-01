@@ -50,9 +50,9 @@ const sampleRoutes = {
     eta: '7 minutes',
     steps: [
       'Exit the Central Library toward the west plaza.',
-      'Turn left and follow West Nedderman Drive.',
-      'Continue past the Business Building and keep right.',
-      'The Maverick Activities Center is on your left—enter through the glass doors.',
+      'Go straight until you get on the bridge connecting to the Fine Arts Building.',
+      'Continue past the building and take a right',
+      'The Maverick Activities Center is on your left with giant glass windows.',
     ],
   },
   'College Park Center|Science Hall': {
@@ -64,7 +64,7 @@ const sampleRoutes = {
       [32.7306, -97.1102],
       [32.7297, -97.1124],
     ],
-    eta: '9 minutes',
+    eta: '6 minutes',
     steps: [
       'Leave College Park Center and head northwest toward Spaniolo Drive.',
       'Turn left on Spaniolo Drive and continue straight.',
@@ -186,7 +186,7 @@ const App = () => {
       startLocation,
       destination,
       encouragement,
-      summary: `Curated walk from ${startLocation} to ${destination}. Estimated travel time: ${routeDetails.eta}.`,
+      summary: `Curated walk from ${startLocation} to ${destination}.\n Estimated travel time: ${routeDetails.eta}.`,
     });
 
     setStage('message');
@@ -305,7 +305,7 @@ const App = () => {
             {renderHeader('A little encouragement before you head out!')}
 
             <section className="rounded-3xl border border-uta-orange/30 bg-uta-orange/10 px-6 py-8 text-center space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-uta-orange">Today\'s Kind Note</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-uta-orange">Today's Kind Note</p>
               <p className="text-2xl font-bold text-uta-blue">{routeResult.encouragement}</p>
               <p className="text-sm text-uta-blue/70">
                 Starting from <span className="font-semibold">{startLocation}</span> and heading to{' '}
@@ -368,7 +368,7 @@ const App = () => {
               onClick={() => setStage('completion')}
               className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
             >
-              I\'ve Arrived
+              I've Arrived
             </button>
           </div>
         )}
