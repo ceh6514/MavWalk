@@ -28,15 +28,6 @@ const campusLocations = [
   'University Center',
 ];
 
-const locationCoordinates = {
-  'Central Library': [32.72991314809259, -97.11290672883602],
-  'College Park Center': [32.730652363101214, -97.10803828570232],
-  'Engineering Research Building': [32.73344190653296, -97.11322886238746],
-  'Fine Arts Building': [32.73050397086501, -97.11513947404578],
-  'Maverick Activities Center': [32.73195397555977, -97.11691204643674],
-  'Science Hall': [32.73048850678233, -97.11365621515012],
-  'University Center': [32.73166137076197, -97.11099924459786],
-};
 
 const sampleRoutes = {
   'College Park Center|Maverick Activities Center': {
@@ -50,26 +41,11 @@ const sampleRoutes = {
   },
 };
 
-const encouragements = [
-  'Hope you have a great day!',
-  'You are beautifully unique!',
-];
 
 const App = () => {
   const [startLocation, setStartLocation] = useState('');
   const [destination, setDestination] = useState('');
-  const [formError, setFormError] = useState(null);
-  const [routeResult, setRouteResult] = useState(null);
-  const [stage, setStage] = useState('home');
-  const [userMessage, setUserMessage] = useState('');
-  const [submissionStatus, setSubmissionStatus] = useState(null);
-
-  const resetJourney = () => {
-    setStage('home');
-    setRouteResult(null);
-    setUserMessage('');
-    setSubmissionStatus(null);
-  };
+  const [feedback, setFeedback] = useState(null);
 
   const handleFindRoute = (event) => {
     event.preventDefault();
@@ -77,79 +53,37 @@ const App = () => {
     setFormError(null);
 
     if (!startLocation || !destination) {
-      setFormError('Please select both a starting point and destination to continue.');
-      setStage('home');
-      setRouteResult(null);
+      setFeedback({
+        status: 'error',
+        message: 'Please select both a starting point and destination to continue.',
+      });
       return;
     }
 
     if (startLocation === destination) {
-      setFormError('Choose two different locations to discover a new route.');
-      setStage('home');
-      setRouteResult(null);
-      return;
-    }
-
-    const startCoordinates = locationCoordinates[startLocation];
-    const destinationCoordinates = locationCoordinates[destination];
-
-    if (!startCoordinates || !destinationCoordinates) {
-      setFormError('We do not have map data for one of your selections just yet.');
-      setStage('home');
-      setRouteResult(null);
+      setFeedback({
+        status: 'error',
+        message: 'Choose two different locations to discover a new route.',
+      });
       return;
     }
 
     const routeKey = `${startLocation}|${destination}`;
     const routeDetails = sampleRoutes[routeKey];
 
-    const encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-
     if (routeDetails) {
-      setRouteResult({
+      setFeedback({
         status: 'success',
-        summary: `Here is the safest path we recommend from ${startLocation} to ${destination}. Estimated travel time: ${routeDetails.eta}.`,
+        message: `Here is the safest path we recommend from ${startLocation} to ${destination}. Estimated travel time: ${routeDetails.eta}.`,
         steps: routeDetails.steps,
-        encouragement,
-        startCoordinates,
-        destinationCoordinates,
       });
-    } else {
-      setRouteResult({
-        status: 'info',
-        summary: `We're still fine-tuning the curated route from ${startLocation} to ${destination}. Here's a direct path in the meantime.`,
-        encouragement,
-        startCoordinates,
-        destinationCoordinates,
-      });
-    }
-
-    setUserMessage('');
-    setSubmissionStatus(null);
-    setStage('message');
-  };
-
-  const mapCenter = useMemo(() => {
-    if (!routeResult?.startCoordinates || !routeResult?.destinationCoordinates) {
-      return [32.7312, -97.112];
-    }
-
-    const [startLat, startLng] = routeResult.startCoordinates;
-    const [destLat, destLng] = routeResult.destinationCoordinates;
-
-    return [(startLat + destLat) / 2, (startLng + destLng) / 2];
-  }, [routeResult]);
-
-  const handleSendMessage = (event) => {
-    event.preventDefault();
-
-    if (!userMessage.trim()) {
-      setSubmissionStatus({ type: 'error', message: 'Feel free to share a kind thought before sending, or choose Finish to return home.' });
       return;
     }
 
-    setSubmissionStatus({ type: 'success', message: 'Thank you! Your message has been saved for future Mavericks.' });
-    setUserMessage('');
+    setFeedback({
+      status: 'info',
+      message: `Your curated route from ${startLocation} to ${destination} is on its way!`,
+    });
   };
 
   const renderHeader = (subtitle) => (
@@ -349,28 +283,36 @@ const App = () => {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  type="submit"
-                  className="flex-1 rounded-2xl bg-uta-blue px-5 py-3 text-base font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-blue/40"
-                >
-                  Send Message
-                </button>
-                <button
-                  type="button"
-                  onClick={resetJourney}
-                  className="flex-1 rounded-2xl border border-uta-blue/30 px-5 py-3 text-base font-semibold uppercase tracking-wider text-uta-blue transition-colors duration-200 hover:bg-uta-blue/5 focus:outline-none focus:ring-4 focus:ring-uta-blue/30"
-                >
-                  Finish
-                </button>
-              </div>
-            </form>
+          <button
+            type="submit"
+            className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
+          >
+            Find My Route
+          </button>
+        </form>
+
+        {feedback && (
+          <div
+            className={`rounded-2xl border px-4 py-4 text-uta-blue space-y-3 ${
+              feedback.status === 'error'
+                ? 'border-red-200 bg-red-50 text-red-700'
+                : 'border-uta-blue/20 bg-uta-blue/5'
+            }`}
+          >
+            <p className="text-base font-medium">{feedback.message}</p>
+            {feedback.steps && (
+              <ol className="list-decimal list-inside space-y-1 text-sm text-uta-blue/80">
+                {feedback.steps.map((step, index) => (
+                  <li key={`route-step-${index}`}>{step}</li>
+                ))}
+              </ol>
+            )}
           </div>
         )}
       </div>
 
       <footer className="mt-8 text-center text-sm text-gray-500">
-        Routes and kind messages are arriving as we build the new MavWalk experience.
+        Early build, so features are not fully representative of final product.
       </footer>
     </div>
   );
