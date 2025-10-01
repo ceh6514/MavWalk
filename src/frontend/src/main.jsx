@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
+main
 
 const campusLocations = [
   'Central Library',
@@ -16,6 +17,7 @@ const App = () => {
   const [destination, setDestination] = useState('');
   const [feedback, setFeedback] = useState('');
 
+main
   const handleFindRoute = (event) => {
     event.preventDefault();
 
@@ -105,17 +107,20 @@ const App = () => {
         {feedback && (
           <div className="rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-center text-uta-blue">
             {feedback}
+main
           </div>
         )}
+      </div>
 
         <footer className="text-center text-sm text-gray-400">
           Routes and kind messages are coming soon as we build the new MavWalk experience.
         </footer>
       </div>
+main
     </div>
   );
-};
 
+main
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 
