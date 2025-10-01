@@ -28,49 +28,141 @@ const campusLocations = [
   'University Center',
 ];
 
+const kindnessMessages = [
+  'You are exactly where you need to be today. Take a deep breath and enjoy the walk.',
+  'Another Maverick left this note for you: “You are stronger than this week’s deadlines.”',
+  'Someone believes in you. Keep your head up and keep moving forward.',
+  'Your smile might be the highlight of someone’s day. Share it generously!',
+  'You deserve to feel proud of yourself. This small walk is part of a big journey.',
+  'There is so much goodness waiting for you today. Thanks for being part of MavWalk!',
+];
 
 const sampleRoutes = {
-  'College Park Center|Maverick Activities Center': {
-    eta: '6 minutes',
+  'Central Library|Maverick Activities Center': {
+    startCoordinates: [32.7296, -97.1131],
+    destinationCoordinates: [32.7282, -97.1167],
+    pathCoordinates: [
+      [32.7296, -97.1131],
+      [32.7293, -97.1142],
+      [32.7289, -97.1154],
+      [32.7282, -97.1167],
+    ],
+    eta: '7 minutes',
     steps: [
-      'Exit College Park Center through the west plaza toward Spaniolo Drive.',
-      'Follow Spaniolo Drive north for one block.',
-      'Turn left on West Nedderman Drive and continue past the College of Business.',
-      'The Maverick Activities Center will be on your right—enter through the main glass doors.',
+      'Exit the Central Library toward the west plaza.',
+      'Turn left and follow West Nedderman Drive.',
+      'Continue past the Business Building and keep right.',
+      'The Maverick Activities Center is on your left—enter through the glass doors.',
+    ],
+  },
+  'College Park Center|Science Hall': {
+    startCoordinates: [32.7323, -97.1056],
+    destinationCoordinates: [32.7297, -97.1124],
+    pathCoordinates: [
+      [32.7323, -97.1056],
+      [32.7315, -97.1078],
+      [32.7306, -97.1102],
+      [32.7297, -97.1124],
+    ],
+    eta: '9 minutes',
+    steps: [
+      'Leave College Park Center and head northwest toward Spaniolo Drive.',
+      'Turn left on Spaniolo Drive and continue straight.',
+      'Cross UTA Boulevard and keep following Spaniolo Drive.',
+      'Science Hall is on the right—enter through the south entrance.',
+    ],
+  },
+  'Engineering Research Building|Fine Arts Building': {
+    startCoordinates: [32.732, -97.1114],
+    destinationCoordinates: [32.731, -97.1171],
+    pathCoordinates: [
+      [32.732, -97.1114],
+      [32.7316, -97.1128],
+      [32.7314, -97.1147],
+      [32.731, -97.1171],
+    ],
+    eta: '8 minutes',
+    steps: [
+      'Exit the Engineering Research Building toward the courtyard.',
+      'Follow the path west along West Mitchell Street.',
+      'Continue straight past the Architecture Building.',
+      'The Fine Arts Building is ahead on the left—enter through the main lobby.',
+    ],
+  },
+  'University Center|Central Library': {
+    startCoordinates: [32.7312, -97.1109],
+    destinationCoordinates: [32.7296, -97.1131],
+    pathCoordinates: [
+      [32.7312, -97.1109],
+      [32.7308, -97.1118],
+      [32.7302, -97.1126],
+      [32.7296, -97.1131],
+    ],
+    eta: '4 minutes',
+    steps: [
+      'Leave the University Center heading west toward Cooper Street.',
+      'Turn slightly right and follow the path toward the Central Library mall.',
+      'Continue straight until you reach the library plaza.',
+      'Enter the Central Library through the front doors.',
     ],
   },
 };
 
+const defaultCenter = [32.7318, -97.1133];
 
 const App = () => {
   const [startLocation, setStartLocation] = useState('');
   const [destination, setDestination] = useState('');
-  const [feedback, setFeedback] = useState(null);
   const [stage, setStage] = useState('home');
   const [routeResult, setRouteResult] = useState(null);
-  const [mapCenter, setMapCenter] = useState([32.7318, -97.1133]); // UTA-ish center
+  const [formFeedback, setFormFeedback] = useState(null);
   const [userMessage, setUserMessage] = useState('');
   const [submissionStatus, setSubmissionStatus] = useState(null);
-  const [formError, setFormError] = useState(null);
 
+  const mapCenter = useMemo(() => {
+    if (!routeResult?.pathCoordinates?.length) {
+      return defaultCenter;
+    }
+
+    const { pathCoordinates } = routeResult;
+    const { totalLat, totalLng } = pathCoordinates.reduce(
+      (totals, [lat, lng]) => ({
+        totalLat: totals.totalLat + lat,
+        totalLng: totals.totalLng + lng,
+      }),
+      { totalLat: 0, totalLng: 0 }
+    );
+
+    return [totalLat / pathCoordinates.length, totalLng / pathCoordinates.length];
+  }, [routeResult]);
+
+  const resetJourney = () => {
+    setStartLocation('');
+    setDestination('');
+    setStage('home');
+    setRouteResult(null);
+    setFormFeedback(null);
+    setUserMessage('');
+    setSubmissionStatus(null);
+  };
 
   const handleFindRoute = (event) => {
     event.preventDefault();
-
-    setFormError(null);
+    setFormFeedback(null);
+    setSubmissionStatus(null);
 
     if (!startLocation || !destination) {
-      setFeedback({
-        status: 'error',
-        message: 'Please select both a starting point and destination to continue.',
+      setFormFeedback({
+        type: 'error',
+        message: 'Please select both a starting point and a destination.',
       });
       return;
     }
 
     if (startLocation === destination) {
-      setFeedback({
-        status: 'error',
-        message: 'Choose two different locations to discover a new route.',
+      setFormFeedback({
+        type: 'error',
+        message: 'Pick two different locations to discover a curated walk.',
       });
       return;
     }
@@ -78,47 +170,44 @@ const App = () => {
     const routeKey = `${startLocation}|${destination}`;
     const routeDetails = sampleRoutes[routeKey];
 
-    if (routeDetails) {
-    // demo coordinates so the map has something valid to render
-    const startCoordinates = [32.7318, -97.1133];
-    const destinationCoordinates = [32.7292, -97.1155];
-
-    setRouteResult({
-      status: 'success',
-      startCoordinates,
-      destinationCoordinates,
-      summary: `Safest path from ${startLocation} to ${destination}. ETA: ${routeDetails.eta}.`,
-      steps: routeDetails.steps,
-    });
-
-    setFeedback({
-      status: 'success',
-      message: `Here is the safest path we recommend from ${startLocation} to ${destination}. Estimated travel time: ${routeDetails.eta}.`,
-      steps: routeDetails.steps,
-    });
-
-    setStage('map');   // show the map stage
-    return;
-  }
-
-    setFeedback({
-      status: 'info',
-      message: `Your curated route from ${startLocation} to ${destination} is on its way!`,
-    });
-  
-    setSubmissionStatus({ type: 'success', message: 'Thanks! Your note was saved for future walkers.' });
-    // Optional: clear the box
-    setUserMessage('');
-  };
-
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!userMessage.trim()) {
-      setSubmissionStatus({ type: 'error', message: 'Please write a short message or skip.' });
+    if (!routeDetails) {
+      setFormFeedback({
+        type: 'info',
+        message:
+          'We are still curating that path. Please choose another pair of locations while we finish mapping it.',
+      });
       return;
     }
 
+    const encouragement = kindnessMessages[Math.floor(Math.random() * kindnessMessages.length)];
 
+    setRouteResult({
+      ...routeDetails,
+      startLocation,
+      destination,
+      encouragement,
+      summary: `Curated walk from ${startLocation} to ${destination}. Estimated travel time: ${routeDetails.eta}.`,
+    });
+
+    setStage('message');
+  };
+
+  const handleSendMessage = (event) => {
+    event.preventDefault();
+
+    if (!userMessage.trim()) {
+      setSubmissionStatus({
+        type: 'error',
+        message: 'Please share a short note or tap Finish to skip this step.',
+      });
+      return;
+    }
+
+    setSubmissionStatus({
+      type: 'success',
+      message: 'Thanks! Your message was saved for future Mavericks to enjoy.',
+    });
+    setUserMessage('');
   };
 
   const renderHeader = (subtitle) => (
@@ -142,7 +231,7 @@ const App = () => {
       <div className="w-full max-w-xl bg-white shadow-2xl rounded-3xl p-10 space-y-8">
         {stage === 'home' && (
           <>
-            {renderHeader('Please choose your starting location and destination below!')}
+            {renderHeader('Choose your starting location and destination to begin.')}
 
             <form className="space-y-6" onSubmit={handleFindRoute}>
               <div className="space-y-2">
@@ -197,9 +286,15 @@ const App = () => {
               </button>
             </form>
 
-            {formError && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-700">
-                <p className="text-base font-medium">{formError}</p>
+            {formFeedback && (
+              <div
+                className={`rounded-2xl border px-4 py-4 text-base font-medium ${
+                  formFeedback.type === 'error'
+                    ? 'border-red-200 bg-red-50 text-red-700'
+                    : 'border-uta-blue/20 bg-uta-blue/5 text-uta-blue'
+                }`}
+              >
+                {formFeedback.message}
               </div>
             )}
           </>
@@ -210,7 +305,7 @@ const App = () => {
             {renderHeader('A little encouragement before you head out!')}
 
             <section className="rounded-3xl border border-uta-orange/30 bg-uta-orange/10 px-6 py-8 text-center space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-uta-orange">Today's Kind Note</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-uta-orange">Today\'s Kind Note</p>
               <p className="text-2xl font-bold text-uta-blue">{routeResult.encouragement}</p>
               <p className="text-sm text-uta-blue/70">
                 Starting from <span className="font-semibold">{startLocation}</span> and heading to{' '}
@@ -232,13 +327,7 @@ const App = () => {
           <div className="space-y-6">
             {renderHeader('Follow the highlighted path to reach your destination!')}
 
-            <div
-              className={`rounded-2xl border px-5 py-5 text-uta-blue space-y-3 ${
-                routeResult.status === 'success'
-                  ? 'border-uta-blue/20 bg-uta-blue/5'
-                  : 'border-uta-orange/20 bg-uta-orange/10'
-              }`}
-            >
+            <div className="rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-5 py-5 text-uta-blue space-y-3">
               <p className="text-base font-medium">{routeResult.summary}</p>
               {routeResult.steps && (
                 <ol className="list-decimal list-inside space-y-1 text-sm text-uta-blue/80">
@@ -270,12 +359,7 @@ const App = () => {
                     {destination}
                   </Tooltip>
                 </Marker>
-                <Polyline
-                  positions={[routeResult.startCoordinates, routeResult.destinationCoordinates]}
-                  color="#ff6f3c"
-                  weight={4}
-                  dashArray="8 12"
-                />
+                <Polyline positions={routeResult.pathCoordinates} color="#ff6f3c" weight={4} dashArray="8 12" />
               </MapContainer>
             </div>
 
@@ -284,14 +368,14 @@ const App = () => {
               onClick={() => setStage('completion')}
               className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
             >
-              I've Arrived
+              I\'ve Arrived
             </button>
           </div>
         )}
 
         {stage === 'completion' && (
           <div className="space-y-6">
-            {renderHeader('Route Completed! Would you like to brighten someone else’s walk?')}
+            {renderHeader('Route Completed! Would you like to brighten someone else\'s walk?')}
 
             <form className="space-y-4" onSubmit={handleSendMessage}>
               <label htmlFor="kindMessage" className="block text-sm font-semibold text-uta-blue uppercase tracking-wider">
@@ -318,35 +402,26 @@ const App = () => {
                 </div>
               )}
 
-          <button
-            type="submit"
-            className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
-          >
-            Find My Route
-          </button>
-        </form>
-
-        {feedback && (
-          <div
-            className={`rounded-2xl border px-4 py-4 text-uta-blue space-y-3 ${
-              feedback.status === 'error'
-                ? 'border-red-200 bg-red-50 text-red-700'
-                : 'border-uta-blue/20 bg-uta-blue/5'
-            }`}
-          >
-            <p className="text-base font-medium">{feedback.message}</p>
-            {feedback.steps && (
-              <ol className="list-decimal list-inside space-y-1 text-sm text-uta-blue/80">
-                {feedback.steps.map((step, index) => (
-                  <li key={`route-step-${index}`}>{step}</li>
-                ))}
-              </ol>
-            )}
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  className="w-full rounded-2xl bg-uta-blue px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-blue/40"
+                >
+                  Send Message
+                </button>
+                <button
+                  type="button"
+                  onClick={resetJourney}
+                  className="w-full rounded-2xl border border-uta-orange/40 px-5 py-3 text-lg font-semibold uppercase tracking-wider text-uta-orange shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-uta-orange/30"
+                >
+                  Finish
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>
-      )}
-      </div>
+
       <footer className="mt-8 text-center text-sm text-gray-500">
         Early build, so features are not fully representative of final product.
       </footer>
