@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-main
 
 const campusLocations = [
   'Central Library',
@@ -17,7 +16,6 @@ const App = () => {
   const [destination, setDestination] = useState('');
   const [feedback, setFeedback] = useState('');
 
-main
   const handleFindRoute = (event) => {
     event.preventDefault();
 
@@ -44,7 +42,9 @@ main
 
           <div className="space-y-1">
             <h1 className="text-4xl font-extrabold text-uta-blue tracking-tight">MavWalk</h1>
-            <p className="text-uta-orange font-semibold uppercase text-sm tracking-[0.4em]">UPLIFTING ROUTES FOR MAVERICKS</p>
+            <p className="text-uta-orange font-semibold uppercase text-sm tracking-[0.4em]">
+              UPLIFTING ROUTES FOR MAVERICKS
+            </p>
             <p className="text-gray-600 text-base">
               Please choose your starting location and destination below!
             </p>
@@ -107,20 +107,16 @@ main
         {feedback && (
           <div className="rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-center text-uta-blue">
             {feedback}
-main
           </div>
         )}
       </div>
 
-        <footer className="text-center text-sm text-gray-400">
-          Routes and kind messages are coming soon as we build the new MavWalk experience.
-        </footer>
-      </div>
-main
+      <footer className="text-center text-sm text-gray-400 mt-8">
+        Routes and kind messages are coming soon as we build the new MavWalk experience.
+      </footer>
     </div>
   );
+};
 
-main
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
-
