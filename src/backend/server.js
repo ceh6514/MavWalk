@@ -9,6 +9,39 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 
+// Simple lookup for well-known campus locations so routes can have consistent coordinates.
+const campusLocations = {
+    'Central Library': { lat: 32.72991314809259, lon: -97.11290672883602 },
+    'College Park Center': { lat: 32.730652363101214, lon: -97.10803828570232 },
+    'Engineering Research Building': { lat: 32.73344190653296, lon: -97.11322886238746 },
+    'Fine Arts Building': { lat: 32.73050397086501, lon: -97.11513947404578 },
+    'Maverick Activities Center': { lat: 32.73195397555977, lon: -97.11691204643674 },
+    'Science Hall': { lat: 32.73048850678233, lon: -97.11365621515012 },
+    'University Center': { lat: 32.73166137076197, lon: -97.11099924459786 },
+};
+
+const DEFAULT_START_COORDS = [32.7300, -97.1145];
+const DEFAULT_END_COORDS = [32.7325, -97.1120];
+
+const getLocationCoords = (locationName) => {
+    const coords = campusLocations[locationName];
+    if (!coords) {
+        return null;
+    }
+    return [coords.lat, coords.lon];
+};
+
+const buildRoute = (startLocation, destination) => {
+    const startCoords = getLocationCoords(startLocation) || [...DEFAULT_START_COORDS];
+    const endCoords = getLocationCoords(destination) || [...DEFAULT_END_COORDS];
+
+    return {
+        startCoords: [...startCoords],
+        endCoords: [...endCoords],
+        buddyCurrentCoords: [...startCoords],
+    };
+};
+
 //In memory database
 //We've added coordinates to simulate location tracking.
 let users = [
@@ -16,36 +49,28 @@ let users = [
     { id: 2, email: 'slowell@uta.edu', password: 'password123', name: 'Seth Lowell' }
 ];
 let walkRequests = [
-    { 
-        id: 101, 
-        userId: 1, 
-        startLocation: 'Central Library', 
-        destination: 'Preston Hall', 
-        requestTime: new Date(), 
+    {
+        id: 101,
+        userId: 1,
+        startLocation: 'Central Library',
+        destination: 'University Center',
+        requestTime: new Date(),
         status: 'pending', // pending -> active -> completed
         buddyId: null,
         // --- NEW: Location Data ---
-        route: {
-            startCoords: [32.7296, -97.1131], // Central Library
-            endCoords: [32.730911, -97.113221],   // Preston Hall
-            buddyCurrentCoords: [32.7296, -97.1131] // Buddy starts at the start location
-        },
+        route: buildRoute('Central Library', 'University Center'),
         eta: '3 minutes'
     },
-    { 
-        id: 102, 
-        userId: 2, 
-        startLocation: 'SEIR Building', 
-        destination: 'Pickhard Hall', 
-        requestTime: new Date(), 
-        status: 'pending', 
+    {
+        id: 102,
+        userId: 2,
+        startLocation: 'College Park Center',
+        destination: 'Maverick Activities Center',
+        requestTime: new Date(),
+        status: 'pending',
         buddyId: null,
-        route: {
-            startCoords: [32.7278, -97.1135], // SEIR
-            endCoords: [32.7290, -97.1114],   // PKH
-            buddyCurrentCoords: [32.7278, -97.1135]
-        },
-        eta: '2 minutes'
+        route: buildRoute('College Park Center', 'Maverick Activities Center'),
+        eta: '6 minutes'
     }
 ];
 let nextWalkId = 103;
@@ -73,6 +98,15 @@ app.get('/api/walks', (req, res) => {
     res.json(pendingWalks);
 });
 
+//Return a list of known campus locations with coordinates so the frontend can render markers.
+app.get('/api/locations', (req, res) => {
+    const locations = Object.entries(campusLocations).map(([name, coords]) => ({
+        name,
+        coordinates: [coords.lat, coords.lon],
+    }));
+    res.json(locations);
+});
+
 //Creating a walk, place holder route used
 app.post('/api/walks', (req, res) => {
     const { userId, startLocation, destination } = req.body;
@@ -85,11 +119,7 @@ app.post('/api/walks', (req, res) => {
         status: 'pending',
         buddyId: null,
         //Add some default coordinates for new requests
-        route: {
-            startCoords: [32.7300, -97.1145], //A random start point
-            endCoords: [32.7325, -97.1120],   //Another end point
-            buddyCurrentCoords: [32.7300, -97.1145]
-        },
+        route: buildRoute(startLocation, destination),
         eta: '7 minutes'
     };
     walkRequests.push(newWalkRequest);
