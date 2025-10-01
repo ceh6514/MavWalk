@@ -42,9 +42,9 @@ const App = () => {
 
           <div className="space-y-1">
             <h1 className="text-4xl font-extrabold text-uta-blue tracking-tight">MavWalk</h1>
-            <p className="text-uta-orange font-semibold uppercase text-sm tracking-[0.4em]">Kind Routes for Mavericks</p>
+            <p className="text-uta-orange font-semibold uppercase text-sm tracking-[0.4em]">UPLIFTING ROUTES FOR MAVERICKS</p>
             <p className="text-gray-600 text-base">
-              Pick your starting point and destination to uncover a campus walk paired with a kind message.
+              Please choose your starting location and destination below!
             </p>
           </div>
         </header>
