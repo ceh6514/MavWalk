@@ -46,6 +46,13 @@ const App = () => {
   const [startLocation, setStartLocation] = useState('');
   const [destination, setDestination] = useState('');
   const [feedback, setFeedback] = useState(null);
+  const [stage, setStage] = useState('home');
+  const [routeResult, setRouteResult] = useState(null);
+  const [mapCenter, setMapCenter] = useState([32.7318, -97.1133]); // UTA-ish center
+  const [userMessage, setUserMessage] = useState('');
+  const [submissionStatus, setSubmissionStatus] = useState(null);
+  const [formError, setFormError] = useState(null);
+
 
   const handleFindRoute = (event) => {
     event.preventDefault();
@@ -72,18 +79,46 @@ const App = () => {
     const routeDetails = sampleRoutes[routeKey];
 
     if (routeDetails) {
-      setFeedback({
-        status: 'success',
-        message: `Here is the safest path we recommend from ${startLocation} to ${destination}. Estimated travel time: ${routeDetails.eta}.`,
-        steps: routeDetails.steps,
-      });
-      return;
-    }
+    // demo coordinates so the map has something valid to render
+    const startCoordinates = [32.7318, -97.1133];
+    const destinationCoordinates = [32.7292, -97.1155];
+
+    setRouteResult({
+      status: 'success',
+      startCoordinates,
+      destinationCoordinates,
+      summary: `Safest path from ${startLocation} to ${destination}. ETA: ${routeDetails.eta}.`,
+      steps: routeDetails.steps,
+    });
+
+    setFeedback({
+      status: 'success',
+      message: `Here is the safest path we recommend from ${startLocation} to ${destination}. Estimated travel time: ${routeDetails.eta}.`,
+      steps: routeDetails.steps,
+    });
+
+    setStage('map');   // show the map stage
+    return;
+  }
 
     setFeedback({
       status: 'info',
       message: `Your curated route from ${startLocation} to ${destination} is on its way!`,
     });
+  
+    setSubmissionStatus({ type: 'success', message: 'Thanks! Your note was saved for future walkers.' });
+    // Optional: clear the box
+    setUserMessage('');
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!userMessage.trim()) {
+      setSubmissionStatus({ type: 'error', message: 'Please write a short message or skip.' });
+      return;
+    }
+
+
   };
 
   const renderHeader = (subtitle) => (
@@ -310,7 +345,8 @@ const App = () => {
           </div>
         )}
       </div>
-
+      )}
+      </div>
       <footer className="mt-8 text-center text-sm text-gray-500">
         Early build, so features are not fully representative of final product.
       </footer>
