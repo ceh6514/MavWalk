@@ -118,6 +118,7 @@ const App = () => {
   const [formFeedback, setFormFeedback] = useState(null);
   const [userMessage, setUserMessage] = useState('');
   const [submissionStatus, setSubmissionStatus] = useState(null);
+  const [hasSubmittedMessage, setHasSubmittedMessage] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState(null);
   const watchIdRef = useRef(null);
@@ -209,6 +210,7 @@ const App = () => {
     setFormFeedback(null);
     setUserMessage('');
     setSubmissionStatus(null);
+    setHasSubmittedMessage(false);
   };
 
   const handleFindRoute = (event) => {
@@ -260,6 +262,15 @@ const App = () => {
   const handleSendMessage = (event) => {
     event.preventDefault();
 
+    if (hasSubmittedMessage) {
+      setSubmissionStatus({
+        type: 'info',
+        message: 'You already shared a message for this walk. Tap Finish when you are ready to wrap up.',
+      });
+      return;
+    }
+
+
     if (!userMessage.trim()) {
       setSubmissionStatus({
         type: 'error',
@@ -270,9 +281,10 @@ const App = () => {
 
     setSubmissionStatus({
       type: 'success',
-      message: 'Thanks! Your message was saved for future Mavericks to enjoy.',
+      message: 'Thanks! Your message was saved for future Mavericks to enjoy. Tap Finish to end your walk.',
     });
     setUserMessage('');
+    setHasSubmittedMessage(true);
   };
 
   const renderHeader = (subtitle) => (
@@ -468,9 +480,18 @@ const App = () => {
                 id="kindMessage"
                 value={userMessage}
                 onChange={(event) => setUserMessage(event.target.value)}
+                disabled={hasSubmittedMessage}
                 rows={4}
-                placeholder="Share a kind thought for the next Maverick who walks this path..."
-                className="w-full rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-base text-uta-blue focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40"
+                placeholder={
+                  hasSubmittedMessage
+                    ? 'You already left a note for this walk. Tap Finish to head back to the start.'
+                    : 'Share a kind thought for the next Maverick who walks this path...'
+                }
+                className={`w-full rounded-2xl border px-4 py-3 text-base focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40 ${
+                  hasSubmittedMessage
+                    ? 'border-uta-blue/10 bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'border-uta-blue/20 bg-uta-blue/5 text-uta-blue'
+                }`}
               />
 
               {submissionStatus && (
@@ -478,7 +499,9 @@ const App = () => {
                   className={`rounded-2xl px-4 py-3 text-sm font-medium ${
                     submissionStatus.type === 'success'
                       ? 'bg-green-50 text-green-700 border border-green-200'
-                      : 'bg-red-50 text-red-700 border border-red-200'
+                      : submissionStatus.type === 'error'
+                        ? 'bg-red-50 text-red-700 border border-red-200'
+                        : 'bg-uta-blue/10 text-uta-blue border border-uta-blue/20'
                   }`}
                 >
                   {submissionStatus.message}
@@ -488,9 +511,14 @@ const App = () => {
               <div className="space-y-3">
                 <button
                   type="submit"
-                  className="w-full rounded-2xl bg-uta-blue px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-blue/40"
+                  disabled={hasSubmittedMessage}
+                  className={`w-full rounded-2xl px-5 py-3 text-lg font-semibold uppercase tracking-wider shadow-lg transition-transform duration-200 focus:outline-none focus:ring-4 focus:ring-uta-blue/40 ${
+                    hasSubmittedMessage
+                      ? 'bg-uta-blue/30 text-white cursor-not-allowed shadow-none'
+                      : 'bg-uta-blue text-white hover:-translate-y-1 hover:shadow-xl'
+                  }`}
                 >
-                  Send Message
+                  {hasSubmittedMessage ? 'Message Sent' : 'Send Message'}
                 </button>
                 <button
                   type="button"
