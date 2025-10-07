@@ -18,7 +18,7 @@ const defaultMarkerIcon = L.icon({
 
 L.Marker.prototype.options.icon = defaultMarkerIcon;
 
-const defaultCampusLocations = [
+const campusLocations = [
   'Central Library',
   'College Park Center',
   'Engineering Research Building',
@@ -37,6 +37,77 @@ const kindnessMessages = [
   'There is so much goodness waiting for you today. Thanks for being part of MavWalk!',
 ];
 
+const sampleRoutes = {
+  'Central Library|Maverick Activities Center': {
+    startCoordinates: [32.7296, -97.1131],
+    destinationCoordinates: [32.7282, -97.1167],
+    pathCoordinates: [
+      [32.7296, -97.1131],
+      [32.7293, -97.1142],
+      [32.7289, -97.1154],
+      [32.7282, -97.1167],
+    ],
+    eta: '7 minutes',
+    steps: [
+      'Exit the Central Library toward the west plaza.',
+      'Go straight until you get on the bridge connecting to the Fine Arts Building.',
+      'Continue past the building and take a right',
+      'The Maverick Activities Center is on your left with giant glass windows.',
+    ],
+  },
+  'College Park Center|Science Hall': {
+    startCoordinates: [32.7323, -97.1056],
+    destinationCoordinates: [32.7297, -97.1124],
+    pathCoordinates: [
+      [32.7323, -97.1056],
+      [32.7315, -97.1078],
+      [32.7306, -97.1102],
+      [32.7297, -97.1124],
+    ],
+    eta: '6 minutes',
+    steps: [
+      'Leave College Park Center and head northwest toward Spaniolo Drive.',
+      'Turn left on Spaniolo Drive and continue straight.',
+      'Cross UTA Boulevard and keep following Spaniolo Drive.',
+      'Science Hall is on the right—enter through the south entrance.',
+    ],
+  },
+  'Engineering Research Building|Fine Arts Building': {
+    startCoordinates: [32.732, -97.1114],
+    destinationCoordinates: [32.731, -97.1171],
+    pathCoordinates: [
+      [32.732, -97.1114],
+      [32.7316, -97.1128],
+      [32.7314, -97.1147],
+      [32.731, -97.1171],
+    ],
+    eta: '8 minutes',
+    steps: [
+      'Exit the Engineering Research Building toward the courtyard.',
+      'Follow the path west along West Mitchell Street.',
+      'Continue straight past the Architecture Building.',
+      'The Fine Arts Building is ahead on the left—enter through the main lobby.',
+    ],
+  },
+  'University Center|Central Library': {
+    startCoordinates: [32.7312, -97.1109],
+    destinationCoordinates: [32.7296, -97.1131],
+    pathCoordinates: [
+      [32.7312, -97.1109],
+      [32.7308, -97.1118],
+      [32.7302, -97.1126],
+      [32.7296, -97.1131],
+    ],
+    eta: '4 minutes',
+    steps: [
+      'Leave the University Center heading west toward Cooper Street.',
+      'Turn slightly right and follow the path toward the Central Library mall.',
+      'Continue straight until you reach the library plaza.',
+      'Enter the Central Library through the front doors.',
+    ],
+  },
+};
+
 const defaultCenter = [32.7318, -97.1133];
 
 const App = () => {
@@ -46,37 +117,13 @@ const App = () => {
   const [routeResult, setRouteResult] = useState(null);
   const [formFeedback, setFormFeedback] = useState(null);
   const [userMessage, setUserMessage] = useState('');
-  const [submissionStatus, setSubmissionStatus] = useState(null);
-  const [campusLocations, setCampusLocations] = useState(defaultCampusLocations);
-  const [locationNotice, setLocationNotice] = useState(null);
-  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [isSavingMessage, setIsSavingMessage] = useState(false);
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await fetch('http://localhost:3001/api/locations');
-        if (!response.ok) {
-          throw new Error('Failed to load locations');
-        }
-
-        const data = await response.json();
-        const locationNames = data.map((location) => location.name).sort();
-        if (locationNames.length) {
-          setCampusLocations(locationNames);
-        }
-      } catch (error) {
-        console.error('Unable to load locations from the backend.', error);
-        setLocationNotice('Using the built-in campus locations because the live list could not be loaded.');
-      }
-    };
-
-    fetchLocations();
-  }, []);
+  const [submissionStatus, setSubmissionStatus] = useState(null);
   const [hasSubmittedMessage, setHasSubmittedMessage] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState(null);
   const watchIdRef = useRef(null);
+  
 
   useEffect(() => {
     if (stage !== 'map') {
@@ -168,7 +215,7 @@ const App = () => {
     setHasSubmittedMessage(false);
   };
 
-  const handleFindRoute = async (event) => {
+  const handleFindRoute = (event) => {
     event.preventDefault();
     setFormFeedback(null);
     setSubmissionStatus(null);
@@ -189,51 +236,32 @@ const App = () => {
       return;
     }
 
-    try {
-      setIsLoadingRoute(true);
-      const response = await fetch(
-        `http://localhost:3001/api/routes?start=${encodeURIComponent(startLocation)}&destination=${encodeURIComponent(destination)}`
-      );
+    const routeKey = `${startLocation}|${destination}`;
+    const routeDetails = sampleRoutes[routeKey];
 
-      if (response.status === 404) {
-        setFormFeedback({
-          type: 'info',
-          message:
-            'We are still curating that path. Please choose another pair of locations while we finish mapping it.',
-        });
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error('Unable to load route');
-      }
-
-      const routeDetails = await response.json();
-      const encouragement = kindnessMessages[Math.floor(Math.random() * kindnessMessages.length)];
-
-      setRouteResult({
-        ...routeDetails,
-        startLocation,
-        destination,
-        encouragement,
-        summary:
-          routeDetails.summary ||
-          `Curated walk from ${startLocation} to ${destination}.\n Estimated travel time: ${routeDetails.eta}.`,
-      });
-
-      setStage('message');
-    } catch (error) {
-      console.error('Unable to load curated route from backend.', error);
+    if (!routeDetails) {
       setFormFeedback({
-        type: 'error',
-        message: 'We had trouble retrieving that path. Please try again or pick a different pair of locations.',
+        type: 'info',
+        message:
+          'We are still curating that path. Please choose another pair of locations while we finish mapping it.',
       });
-    } finally {
-      setIsLoadingRoute(false);
+      return;
     }
+
+    const encouragement = kindnessMessages[Math.floor(Math.random() * kindnessMessages.length)];
+
+    setRouteResult({
+      ...routeDetails,
+      startLocation,
+      destination,
+      encouragement,
+      summary: `Curated walk from ${startLocation} to ${destination}.\n Estimated travel time: ${routeDetails.eta}.`,
+    });
+
+    setStage('message');
   };
 
-  const handleSendMessage = async (event) => {
+  const handleSendMessage = (event) => {
     event.preventDefault();
 
     if (hasSubmittedMessage) {
@@ -253,40 +281,6 @@ const App = () => {
       return;
     }
 
-    try {
-      setIsSavingMessage(true);
-      setSubmissionStatus(null);
-      const response = await fetch('http://localhost:3001/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          startLocation,
-          destination,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ message: 'Unable to save message.' }));
-        throw new Error(errorBody.message);
-      }
-
-      setSubmissionStatus({
-        type: 'success',
-        message: 'Thanks! Your message was saved for future Mavericks to enjoy.',
-      });
-      setUserMessage('');
-    } catch (error) {
-      console.error('Unable to save message to backend.', error);
-      setSubmissionStatus({
-        type: 'error',
-        message: error.message || 'We could not save your message right now. Please try again.',
-      });
-    } finally {
-      setIsSavingMessage(false);
-    }
     setSubmissionStatus({
       type: 'success',
       message: 'Thanks! Your message was saved for future Mavericks to enjoy. Tap Finish to end your walk.',
@@ -365,10 +359,9 @@ const App = () => {
 
               <button
                 type="submit"
-                className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50 disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={isLoadingRoute}
+                className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
               >
-                {isLoadingRoute ? 'Finding Route...' : 'Find My Route'}
+                Find My Route
               </button>
             </form>
 
@@ -381,12 +374,6 @@ const App = () => {
                 }`}
               >
                 {formFeedback.message}
-              </div>
-            )}
-
-            {locationNotice && (
-              <div className="rounded-2xl border border-uta-blue/10 bg-uta-blue/5 px-4 py-3 text-sm text-uta-blue/70">
-                {locationNotice}
               </div>
             )}
           </>
@@ -526,20 +513,16 @@ const App = () => {
               <div className="space-y-3">
                 <button
                   type="submit"
-                className="w-full rounded-2xl bg-uta-blue px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-blue/40 disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={isSavingMessage}
-              >
-                {isSavingMessage ? 'Saving...' : 'Send Message'}
-              </button>
-                  disabled={hasSubmittedMessage}
-                  className={`w-full rounded-2xl px-5 py-3 text-lg font-semibold uppercase tracking-wider shadow-lg transition-transform duration-200 focus:outline-none focus:ring-4 focus:ring-uta-blue/40 ${
+                  className={`w-full rounded-2xl px-5 py-3 text-lg font-semibold uppercase tracking-wider shadow-lg transition-transform duration-200 focus:outline-none focus:ring-4 focus:ring-uta-blue/40 disabled:cursor-not-allowed disabled:opacity-60 ${
                     hasSubmittedMessage
-                      ? 'bg-uta-blue/30 text-white cursor-not-allowed shadow-none'
+                      ? 'bg-uta-blue/30 text-white shadow-none'
                       : 'bg-uta-blue text-white hover:-translate-y-1 hover:shadow-xl'
                   }`}
+                  disabled={isSavingMessage || hasSubmittedMessage}
                 >
-                  {hasSubmittedMessage ? 'Message Sent' : 'Send Message'}
+                  {isSavingMessage ? 'Saving...' : hasSubmittedMessage ? 'Message Sent' : 'Send Message'}
                 </button>
+
                 <button
                   type="button"
                   onClick={resetJourney}
