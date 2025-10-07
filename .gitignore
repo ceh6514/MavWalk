@@ -1,0 +1,11 @@
+# macOS metadata
+.DS_Store
+
+# Node dependencies
+node_modules/
+
+# SQLite databases generated at runtime
+src/backend/data/*.db
+
+# Logs
+npm-debug.log*
