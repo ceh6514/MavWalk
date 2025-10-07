@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
@@ -118,6 +118,71 @@ const App = () => {
   const [formFeedback, setFormFeedback] = useState(null);
   const [userMessage, setUserMessage] = useState('');
   const [submissionStatus, setSubmissionStatus] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationStatus, setLocationStatus] = useState(null);
+  const watchIdRef = useRef(null);
+
+  useEffect(() => {
+    if (stage !== 'map') {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+
+      setUserLocation(null);
+      setLocationStatus(null);
+      return;
+    }
+
+    if (!('geolocation' in navigator)) {
+      setLocationStatus({
+        type: 'error',
+        message: 'Real-time location is unavailable because this browser does not support geolocation.',
+      });
+      return;
+    }
+
+    setLocationStatus({
+      type: 'info',
+      message: 'Requesting your location so the map can follow your walk. Please allow location access if prompted.',
+    });
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      ({ coords }) => {
+        setUserLocation([coords.latitude, coords.longitude]);
+        setLocationStatus(null);
+      },
+      (error) => {
+        let message = 'We could not determine your current location.';
+
+        if (error.code === error.PERMISSION_DENIED) {
+          message = 'Location sharing is blocked. Enable it in your browser to see your position during the walk.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = 'Location data is temporarily unavailable. We will keep trying to update your position.';
+        } else if (error.code === error.TIMEOUT) {
+          message = 'The request for your location timed out. Try checking your connection and permissions.';
+        }
+
+        setLocationStatus({
+          type: 'error',
+          message,
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 20000,
+      }
+    );
+
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [stage]);
+
 
   const mapCenter = useMemo(() => {
     if (!routeResult?.pathCoordinates?.length) {
@@ -336,6 +401,17 @@ const App = () => {
                   ))}
                 </ol>
               )}
+              {locationStatus && (
+                <div
+                  className={`rounded-xl border px-3 py-2 text-sm font-medium ${
+                    locationStatus.type === 'error'
+                      ? 'border-red-200 bg-red-50 text-red-700'
+                      : 'border-uta-blue/30 bg-white text-uta-blue'
+                  }`}
+                >
+                  {locationStatus.message}
+                </div>
+              )}
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-uta-blue/10 shadow-inner">
@@ -359,6 +435,13 @@ const App = () => {
                     {destination}
                   </Tooltip>
                 </Marker>
+                {userLocation && (
+                  <Marker position={userLocation}>
+                    <Tooltip direction="top" offset={[0, -20]} permanent>
+                      You are here
+                    </Tooltip>
+                  </Marker>
+                )}
                 <Polyline positions={routeResult.pathCoordinates} color="#ff6f3c" weight={4} dashArray="8 12" />
               </MapContainer>
             </div>
