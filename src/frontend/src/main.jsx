@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
@@ -73,6 +73,72 @@ const App = () => {
 
     fetchLocations();
   }, []);
+  const [hasSubmittedMessage, setHasSubmittedMessage] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationStatus, setLocationStatus] = useState(null);
+  const watchIdRef = useRef(null);
+
+  useEffect(() => {
+    if (stage !== 'map') {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+
+      setUserLocation(null);
+      setLocationStatus(null);
+      return;
+    }
+
+    if (!('geolocation' in navigator)) {
+      setLocationStatus({
+        type: 'error',
+        message: 'Real-time location is unavailable because this browser does not support geolocation.',
+      });
+      return;
+    }
+
+    setLocationStatus({
+      type: 'info',
+      message: 'Requesting your location so the map can follow your walk. Please allow location access if prompted.',
+    });
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      ({ coords }) => {
+        setUserLocation([coords.latitude, coords.longitude]);
+        setLocationStatus(null);
+      },
+      (error) => {
+        let message = 'We could not determine your current location.';
+
+        if (error.code === error.PERMISSION_DENIED) {
+          message = 'Location sharing is blocked. Enable it in your browser to see your position during the walk.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = 'Location data is temporarily unavailable. We will keep trying to update your position.';
+        } else if (error.code === error.TIMEOUT) {
+          message = 'The request for your location timed out. Try checking your connection and permissions.';
+        }
+
+        setLocationStatus({
+          type: 'error',
+          message,
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 20000,
+      }
+    );
+
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [stage]);
+
 
   const mapCenter = useMemo(() => {
     if (!routeResult?.pathCoordinates?.length) {
@@ -99,6 +165,7 @@ const App = () => {
     setFormFeedback(null);
     setUserMessage('');
     setSubmissionStatus(null);
+    setHasSubmittedMessage(false);
   };
 
   const handleFindRoute = async (event) => {
@@ -169,6 +236,15 @@ const App = () => {
   const handleSendMessage = async (event) => {
     event.preventDefault();
 
+    if (hasSubmittedMessage) {
+      setSubmissionStatus({
+        type: 'info',
+        message: 'You already shared a message for this walk. Tap Finish when you are ready to wrap up.',
+      });
+      return;
+    }
+
+
     if (!userMessage.trim()) {
       setSubmissionStatus({
         type: 'error',
@@ -211,6 +287,12 @@ const App = () => {
     } finally {
       setIsSavingMessage(false);
     }
+    setSubmissionStatus({
+      type: 'success',
+      message: 'Thanks! Your message was saved for future Mavericks to enjoy. Tap Finish to end your walk.',
+    });
+    setUserMessage('');
+    setHasSubmittedMessage(true);
   };
 
   const renderHeader = (subtitle) => (
@@ -346,6 +428,17 @@ const App = () => {
                   ))}
                 </ol>
               )}
+              {locationStatus && (
+                <div
+                  className={`rounded-xl border px-3 py-2 text-sm font-medium ${
+                    locationStatus.type === 'error'
+                      ? 'border-red-200 bg-red-50 text-red-700'
+                      : 'border-uta-blue/30 bg-white text-uta-blue'
+                  }`}
+                >
+                  {locationStatus.message}
+                </div>
+              )}
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-uta-blue/10 shadow-inner">
@@ -369,6 +462,13 @@ const App = () => {
                     {destination}
                   </Tooltip>
                 </Marker>
+                {userLocation && (
+                  <Marker position={userLocation}>
+                    <Tooltip direction="top" offset={[0, -20]} permanent>
+                      You are here
+                    </Tooltip>
+                  </Marker>
+                )}
                 <Polyline positions={routeResult.pathCoordinates} color="#ff6f3c" weight={4} dashArray="8 12" />
               </MapContainer>
             </div>
@@ -395,9 +495,18 @@ const App = () => {
                 id="kindMessage"
                 value={userMessage}
                 onChange={(event) => setUserMessage(event.target.value)}
+                disabled={hasSubmittedMessage}
                 rows={4}
-                placeholder="Share a kind thought for the next Maverick who walks this path..."
-                className="w-full rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-base text-uta-blue focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40"
+                placeholder={
+                  hasSubmittedMessage
+                    ? 'You already left a note for this walk. Tap Finish to head back to the start.'
+                    : 'Share a kind thought for the next Maverick who walks this path...'
+                }
+                className={`w-full rounded-2xl border px-4 py-3 text-base focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40 ${
+                  hasSubmittedMessage
+                    ? 'border-uta-blue/10 bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'border-uta-blue/20 bg-uta-blue/5 text-uta-blue'
+                }`}
               />
 
               {submissionStatus && (
@@ -405,7 +514,9 @@ const App = () => {
                   className={`rounded-2xl px-4 py-3 text-sm font-medium ${
                     submissionStatus.type === 'success'
                       ? 'bg-green-50 text-green-700 border border-green-200'
-                      : 'bg-red-50 text-red-700 border border-red-200'
+                      : submissionStatus.type === 'error'
+                        ? 'bg-red-50 text-red-700 border border-red-200'
+                        : 'bg-uta-blue/10 text-uta-blue border border-uta-blue/20'
                   }`}
                 >
                   {submissionStatus.message}
@@ -420,6 +531,15 @@ const App = () => {
               >
                 {isSavingMessage ? 'Saving...' : 'Send Message'}
               </button>
+                  disabled={hasSubmittedMessage}
+                  className={`w-full rounded-2xl px-5 py-3 text-lg font-semibold uppercase tracking-wider shadow-lg transition-transform duration-200 focus:outline-none focus:ring-4 focus:ring-uta-blue/40 ${
+                    hasSubmittedMessage
+                      ? 'bg-uta-blue/30 text-white cursor-not-allowed shadow-none'
+                      : 'bg-uta-blue text-white hover:-translate-y-1 hover:shadow-xl'
+                  }`}
+                >
+                  {hasSubmittedMessage ? 'Message Sent' : 'Send Message'}
+                </button>
                 <button
                   type="button"
                   onClick={resetJourney}
