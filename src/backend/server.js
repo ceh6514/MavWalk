@@ -3,77 +3,29 @@
 const express = require('express');
 const cors = require('cors');
 
+const {
+    initializeDatabase,
+    findUserByCredentials,
+    getAllLocations,
+    getPendingWalkRequests,
+    createWalkRequest,
+    getWalkRequestById,
+    joinWalkRequest,
+    updateWalkBuddyPosition,
+    completeWalkRequest,
+    getRouteBetweenLocations,
+    getAllRoutes,
+    saveMessage,
+    getMessages,
+} = require('./db');
+
 const app = express();
 const port = 3001;
 
+initializeDatabase();
+
 app.use(cors());
 app.use(express.json());
-
-// Simple lookup for well-known campus locations so routes can have consistent coordinates.
-const campusLocations = {
-    'Central Library': { lat: 32.72991314809259, lon: -97.11290672883602 },
-    'College Park Center': { lat: 32.730652363101214, lon: -97.10803828570232 },
-    'Engineering Research Building': { lat: 32.73344190653296, lon: -97.11322886238746 },
-    'Fine Arts Building': { lat: 32.73050397086501, lon: -97.11513947404578 },
-    'Maverick Activities Center': { lat: 32.73195397555977, lon: -97.11691204643674 },
-    'Science Hall': { lat: 32.73048850678233, lon: -97.11365621515012 },
-    'University Center': { lat: 32.73166137076197, lon: -97.11099924459786 },
-};
-
-const DEFAULT_START_COORDS = [32.7300, -97.1145];
-const DEFAULT_END_COORDS = [32.7325, -97.1120];
-
-const getLocationCoords = (locationName) => {
-    const coords = campusLocations[locationName];
-    if (!coords) {
-        return null;
-    }
-    return [coords.lat, coords.lon];
-};
-
-const buildRoute = (startLocation, destination) => {
-    const startCoords = getLocationCoords(startLocation) || [...DEFAULT_START_COORDS];
-    const endCoords = getLocationCoords(destination) || [...DEFAULT_END_COORDS];
-
-    return {
-        startCoords: [...startCoords],
-        endCoords: [...endCoords],
-        buddyCurrentCoords: [...startCoords],
-    };
-};
-
-//In memory database
-//We've added coordinates to simulate location tracking.
-let users = [
-    { id: 1, email: 'jdoe@uta.edu', password: 'password123', name: 'Jane Doe' }, //Test students
-    { id: 2, email: 'slowell@uta.edu', password: 'password123', name: 'Seth Lowell' }
-];
-let walkRequests = [
-    {
-        id: 101,
-        userId: 1,
-        startLocation: 'Central Library',
-        destination: 'University Center',
-        requestTime: new Date(),
-        status: 'pending', // pending -> active -> completed
-        buddyId: null,
-        // --- NEW: Location Data ---
-        route: buildRoute('Central Library', 'University Center'),
-        eta: '3 minutes'
-    },
-    {
-        id: 102,
-        userId: 2,
-        startLocation: 'College Park Center',
-        destination: 'Maverick Activities Center',
-        requestTime: new Date(),
-        status: 'pending',
-        buddyId: null,
-        route: buildRoute('College Park Center', 'Maverick Activities Center'),
-        eta: '6 minutes'
-    }
-];
-let nextWalkId = 103;
 
 //API Endpoints
 
@@ -83,65 +35,83 @@ app.get('/', (req, res) => res.send('MavWalk Backend Server is running!')); //SU
 //User login
 app.post('/api/login', (req, res) => {
     const { email, password } = req.body;
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-        const { password, ...userWithoutPassword } = user;
-        res.json({ message: 'Login successful!', user: userWithoutPassword });
-    } else {
-        res.status(401).json({ message: 'Invalid credentials.' });
+    try {
+        const user = findUserByCredentials(email, password);
+
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
+
+        res.json({ message: 'Login successful!', user });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Unable to process login request.' });
     }
 });
 
 //Get all pending walks
 app.get('/api/walks', (req, res) => {
-    const pendingWalks = walkRequests.filter(walk => walk.status === 'pending');
-    res.json(pendingWalks);
+    try {
+        const pendingWalks = getPendingWalkRequests();
+        res.json(pendingWalks);
+    } catch (error) {
+        console.error('Failed to load pending walks:', error);
+        res.status(500).json({ message: 'Unable to load walk requests.' });
+    }
 });
 
 //Return a list of known campus locations with coordinates so the frontend can render markers.
 app.get('/api/locations', (req, res) => {
-    const locations = Object.entries(campusLocations).map(([name, coords]) => ({
-        name,
-        coordinates: [coords.lat, coords.lon],
-    }));
-    res.json(locations);
+    try {
+        const locations = getAllLocations().map((location) => ({
+            name: location.name,
+            coordinates: [location.latitude, location.longitude],
+        }));
+        res.json(locations);
+    } catch (error) {
+        console.error('Failed to load locations:', error);
+        res.status(500).json({ message: 'Unable to load locations.' });
+    }
 });
 
 //Creating a walk, place holder route used
 app.post('/api/walks', (req, res) => {
     const { userId, startLocation, destination } = req.body;
-    const newWalkRequest = {
-        id: nextWalkId++,
-        userId,
-        startLocation,
-        destination,
-        requestTime: new Date(),
-        status: 'pending',
-        buddyId: null,
-        //Add some default coordinates for new requests
-        route: buildRoute(startLocation, destination),
-        eta: '7 minutes'
-    };
-    walkRequests.push(newWalkRequest);
-    res.status(201).json(newWalkRequest);
+
+    try {
+        const newWalkRequest = createWalkRequest({
+            userId,
+            startLocationName: startLocation,
+            destinationLocationName: destination,
+        });
+
+        res.status(201).json(newWalkRequest);
+    } catch (error) {
+        console.error('Failed to create walk request:', error);
+        res.status(400).json({ message: error.message || 'Unable to create walk request.' });
+    }
 });
 
 //Joining a walk
 app.post('/api/walks/:id/join', (req, res) => {
     const walkId = parseInt(req.params.id);
     const { buddyId } = req.body;
-    const walkRequest = walkRequests.find(w => w.id === walkId);
+    try {
+        const walkRequest = getWalkRequestById(walkId);
 
-    if (walkRequest) {
-        if (walkRequest.status === 'pending') {
-            walkRequest.status = 'active';
-            walkRequest.buddyId = buddyId;
-            res.json({ message: 'Successfully joined the walk!', walk: walkRequest });
-        } else {
-            res.status(400).json({ message: 'This walk is no longer available.' });
+        if (!walkRequest) {
+            return res.status(404).json({ message: 'Walk request not found.' });
         }
-    } else {
-        res.status(404).json({ message: 'Walk request not found.' });
+
+        if (walkRequest.status !== 'pending') {
+            return res.status(400).json({ message: 'This walk is no longer available.' });
+        }
+
+        const updatedWalk = joinWalkRequest(walkId, buddyId);
+        res.json({ message: 'Successfully joined the walk!', walk: updatedWalk });
+    } catch (error) {
+        console.error('Failed to join walk:', error);
+        res.status(500).json({ message: 'Unable to join walk request.' });
     }
 });
 
@@ -154,22 +124,29 @@ app.post('/api/walks/:id/join', (req, res) => {
  */
 app.get('/api/walks/:id', (req, res) => {
     const walkId = parseInt(req.params.id);
-    const walk = walkRequests.find(w => w.id === walkId);
+    try {
+        const walk = getWalkRequestById(walkId);
 
-    if (walk) {
-        //Simulating the marker moving
-        //This is a simple simulation. In a real app, the buddy's phone would send updates.
-        //We'll just move the buddy slightly closer to the destination each time this is called.
-        if (walk.status === 'active') {
-             const [lat, lon] = walk.route.buddyCurrentCoords;
-             const [endLat, endLon] = walk.route.endCoords;
-             //Move half or 1/10th of the remaining distance
-             walk.route.buddyCurrentCoords[0] += (endLat - lat) * 0.5; //.5 should go pretty fast
-             walk.route.buddyCurrentCoords[1] += (endLon - lon) * 0.1; //.1 relatively speedy
+        if (!walk) {
+            return res.status(404).json({ message: 'Walk not found.' });
         }
+
+        if (walk.status === 'active' && walk.route) {
+            const [currentLat, currentLon] = walk.route.buddyCurrentCoords;
+            const [endLat, endLon] = walk.route.endCoords;
+
+            const updatedLat = currentLat + (endLat - currentLat) * 0.5;
+            const updatedLon = currentLon + (endLon - currentLon) * 0.1;
+
+            updateWalkBuddyPosition(walkId, updatedLat, updatedLon);
+
+            walk.route.buddyCurrentCoords = [updatedLat, updatedLon];
+        }
+
         res.json(walk);
-    } else {
-        res.status(404).json({ message: 'Walk not found.' });
+    } catch (error) {
+        console.error('Failed to load walk details:', error);
+        res.status(500).json({ message: 'Unable to load walk details.' });
     }
 });
 
@@ -179,7 +156,7 @@ app.get('/api/walks/:id', (req, res) => {
  */
 app.post('/api/walks/:id/sos', (req, res) => {
     const walkId = parseInt(req.params.id);
-    const walk = walkRequests.find(w => w.id === walkId);
+    const walk = getWalkRequestById(walkId);
     if(walk){
         console.log(`\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
         console.log(`!!! S.O.S. ACTIVATED FOR WALK #${walkId} !!!`);
@@ -198,12 +175,68 @@ app.post('/api/walks/:id/sos', (req, res) => {
  */
 app.post('/api/walks/:id/complete', (req, res) => {
     const walkId = parseInt(req.params.id);
-    const walk = walkRequests.find(w => w.id === walkId);
-    if (walk) {
-        walk.status = 'completed';
-        res.status(200).json({ message: 'Walk marked as complete. Thank you!', walk });
-    } else {
-        res.status(404).json({ message: 'Walk not found.' });
+    try {
+        const walk = getWalkRequestById(walkId);
+        if (!walk) {
+            return res.status(404).json({ message: 'Walk not found.' });
+        }
+
+        const completedWalk = completeWalkRequest(walkId);
+        res.status(200).json({ message: 'Walk marked as complete. Thank you!', walk: completedWalk });
+    } catch (error) {
+        console.error('Failed to complete walk:', error);
+        res.status(500).json({ message: 'Unable to complete walk.' });
+    }
+});
+
+// Route catalogue endpoints
+app.get('/api/routes', (req, res) => {
+    const { start, destination } = req.query;
+
+    try {
+        if (start && destination) {
+            const route = getRouteBetweenLocations(start, destination);
+
+            if (!route) {
+                return res.status(404).json({ message: 'Route not found for the selected locations.' });
+            }
+
+            return res.json(route);
+        }
+
+        const routes = getAllRoutes();
+        res.json(routes);
+    } catch (error) {
+        console.error('Failed to load routes:', error);
+        res.status(500).json({ message: 'Unable to load route information.' });
+    }
+});
+
+// Message endpoints
+app.get('/api/messages', (req, res) => {
+    try {
+        const messages = getMessages();
+        res.json(messages);
+    } catch (error) {
+        console.error('Failed to load messages:', error);
+        res.status(500).json({ message: 'Unable to load saved messages.' });
+    }
+});
+
+app.post('/api/messages', (req, res) => {
+    const { message, startLocation, destination } = req.body;
+
+    try {
+        const savedMessage = saveMessage({
+            message,
+            startLocationName: startLocation,
+            destinationLocationName: destination,
+        });
+
+        res.status(201).json(savedMessage);
+    } catch (error) {
+        console.error('Failed to save message:', error);
+        res.status(400).json({ message: error.message || 'Unable to save message.' });
     }
 });
 
