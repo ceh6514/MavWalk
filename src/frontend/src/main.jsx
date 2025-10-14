@@ -1,44 +1,41 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import ReactDOM from 'react-dom/client';
-import { MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+// src/main.jsx
+import React, { useState } from "react";
+import ReactDOM from "react-dom/client";
+import { MapContainer, Marker, Polyline, TileLayer, Tooltip } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
+// Assets
+import utaTile from "./142-1425701_university-of-texas-uta-logo-university-of-texas-at-arlington-logo.png";
+import mavLogo from "./MavWalkLogo.png";
+
+// Default marker setup
 const defaultMarkerIcon = L.icon({
   iconUrl: markerIcon,
   iconRetinaUrl: markerIcon2x,
   shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  shadowSize: [41, 41],
+  iconSize: [30, 48],
+  iconAnchor: [15, 48],
+  shadowSize: [48, 48],
 });
-
 L.Marker.prototype.options.icon = defaultMarkerIcon;
 
+// Campus data
 const campusLocations = [
-  'Central Library',
-  'College Park Center',
-  'Engineering Research Building',
-  'Fine Arts Building',
-  'Maverick Activities Center',
-  'Science Hall',
-  'University Center',
-];
-
-const kindnessMessages = [
-  'You are exactly where you need to be today. Take a deep breath and enjoy the walk.',
-  'Another Maverick left this note for you: “You are stronger than this week’s deadlines.”',
-  'Someone believes in you. Keep your head up and keep moving forward.',
-  'Your smile might be the highlight of someone’s day. Share it generously!',
-  'You deserve to feel proud of yourself. This small walk is part of a big journey.',
-  'There is so much goodness waiting for you today. Thanks for being part of MavWalk!',
+  "Central Library",
+  "College Park Center",
+  "Engineering Research Building",
+  "Fine Arts Building",
+  "Maverick Activities Center",
+  "Science Hall",
+  "University Center",
 ];
 
 const sampleRoutes = {
-  'Central Library|Maverick Activities Center': {
+  "Central Library|Maverick Activities Center": {
     startCoordinates: [32.7296, -97.1131],
     destinationCoordinates: [32.7282, -97.1167],
     pathCoordinates: [
@@ -47,501 +44,253 @@ const sampleRoutes = {
       [32.7289, -97.1154],
       [32.7282, -97.1167],
     ],
-    eta: '7 minutes',
-    steps: [
-      'Exit the Central Library toward the west plaza.',
-      'Go straight until you get on the bridge connecting to the Fine Arts Building.',
-      'Continue past the building and take a right',
-      'The Maverick Activities Center is on your left with giant glass windows.',
-    ],
-  },
-  'College Park Center|Science Hall': {
-    startCoordinates: [32.7323, -97.1056],
-    destinationCoordinates: [32.7297, -97.1124],
-    pathCoordinates: [
-      [32.7323, -97.1056],
-      [32.7315, -97.1078],
-      [32.7306, -97.1102],
-      [32.7297, -97.1124],
-    ],
-    eta: '6 minutes',
-    steps: [
-      'Leave College Park Center and head northwest toward Spaniolo Drive.',
-      'Turn left on Spaniolo Drive and continue straight.',
-      'Cross UTA Boulevard and keep following Spaniolo Drive.',
-      'Science Hall is on the right—enter through the south entrance.',
-    ],
-  },
-  'Engineering Research Building|Fine Arts Building': {
-    startCoordinates: [32.732, -97.1114],
-    destinationCoordinates: [32.731, -97.1171],
-    pathCoordinates: [
-      [32.732, -97.1114],
-      [32.7316, -97.1128],
-      [32.7314, -97.1147],
-      [32.731, -97.1171],
-    ],
-    eta: '8 minutes',
-    steps: [
-      'Exit the Engineering Research Building toward the courtyard.',
-      'Follow the path west along West Mitchell Street.',
-      'Continue straight past the Architecture Building.',
-      'The Fine Arts Building is ahead on the left—enter through the main lobby.',
-    ],
-  },
-  'University Center|Central Library': {
-    startCoordinates: [32.7312, -97.1109],
-    destinationCoordinates: [32.7296, -97.1131],
-    pathCoordinates: [
-      [32.7312, -97.1109],
-      [32.7308, -97.1118],
-      [32.7302, -97.1126],
-      [32.7296, -97.1131],
-    ],
-    eta: '4 minutes',
-    steps: [
-      'Leave the University Center heading west toward Cooper Street.',
-      'Turn slightly right and follow the path toward the Central Library mall.',
-      'Continue straight until you reach the library plaza.',
-      'Enter the Central Library through the front doors.',
-    ],
   },
 };
 
 const defaultCenter = [32.7318, -97.1133];
 
+// TopBar
+const TopBar = () => (
+  <>
+    <div className="w-full bg-[#066AA9] text-white text-lg">
+      <div className="mx-auto max-w-7xl flex items-center justify-between px-6 h-16">
+        <div className="flex items-center gap-3">
+          <img src={mavLogo} alt="MavWalk logo" className="w-10 h-10 rounded-md bg-white p-1" />
+          <span className="font-semibold text-xl">
+            MavWalk{" "}
+            <span className="text-sm align-top bg-white/10 px-2 py-0.5 rounded ml-1">BETA</span>
+          </span>
+        </div>
+        <nav className="hidden sm:flex gap-8 text-base">
+          <a href="#" className="hover:text-orange-300 transition">Features</a>
+          <a href="#" className="hover:text-orange-300 transition">Campus Map</a>
+          <a href="#" className="hover:text-orange-300 transition">Community</a>
+          <a href="#" className="hover:text-orange-300 transition">Support</a>
+        </nav>
+      </div>
+    </div>
+    <div className="w-full bg-[#f5632a] text-white text-center text-base py-2 font-medium tracking-wide">
+      <strong>Live Demo:</strong> Experience MavWalk’s campus navigation system
+    </div>
+  </>
+);
+
+// Background
+const BgPattern = () => (
+  <div className="fixed inset-0 -z-10">
+    <div
+      className="absolute inset-0"
+      style={{
+        backgroundImage: `url(${utaTile})`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "230px 230px",
+        backgroundColor: "#0B4D8C",
+        backgroundBlendMode: "overlay",
+        opacity: 0.35,
+      }}
+    />
+  </div>
+);
+
+// Header
+const HeroHeader = () => (
+  <div className="text-center">
+    <img
+      src={mavLogo}
+      alt="MavWalk logo"
+      className="mx-auto mb-6 w-32 h-32 rounded-2xl shadow-xl object-contain bg-white transition-transform duration-300 hover:scale-105"
+    />
+    <h1 className="text-[34px] font-extrabold text-[#0F6AA8] tracking-tight">MavWalk</h1>
+    <p className="text-[#0F6AA8]/80 mt-2 text-lg">
+      Navigate UTA campus with uplifting messages
+    </p>
+    <div className="mt-4 flex items-center justify-center gap-10 text-lg text-[#0F6AA8]/80">
+      <div className="flex items-center gap-2">
+        <span className="inline-block w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+        <span>
+          <strong className="text-[#0F6AA8]">2,847</strong> walks today
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="inline-block w-3 h-3 rounded-full bg-[#f5632a]" />
+        <span>
+          <strong className="text-[#0F6AA8]">1,293</strong> messages shared
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+// App
 const App = () => {
-  const [startLocation, setStartLocation] = useState('');
-  const [destination, setDestination] = useState('');
-  const [stage, setStage] = useState('home');
-  const [routeResult, setRouteResult] = useState(null);
+  const [startLocation, setStartLocation] = useState("");
+  const [destination, setDestination] = useState("");
   const [formFeedback, setFormFeedback] = useState(null);
-  const [userMessage, setUserMessage] = useState('');
-  const [isSavingMessage, setIsSavingMessage] = useState(false);
-  const [submissionStatus, setSubmissionStatus] = useState(null);
-  const [hasSubmittedMessage, setHasSubmittedMessage] = useState(false);
-  const [userLocation, setUserLocation] = useState(null);
-  const [locationStatus, setLocationStatus] = useState(null);
-  const watchIdRef = useRef(null);
-  
+  const [routeResult, setRouteResult] = useState(null);
+  const [stage, setStage] = useState("home");
 
-  useEffect(() => {
-    if (stage !== 'map') {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-
-      setUserLocation(null);
-      setLocationStatus(null);
-      return;
-    }
-
-    if (!('geolocation' in navigator)) {
-      setLocationStatus({
-        type: 'error',
-        message: 'Real-time location is unavailable because this browser does not support geolocation.',
-      });
-      return;
-    }
-
-    setLocationStatus({
-      type: 'info',
-      message: 'Requesting your location so the map can follow your walk. Please allow location access if prompted.',
-    });
-
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      ({ coords }) => {
-        setUserLocation([coords.latitude, coords.longitude]);
-        setLocationStatus(null);
-      },
-      (error) => {
-        let message = 'We could not determine your current location.';
-
-        if (error.code === error.PERMISSION_DENIED) {
-          message = 'Location sharing is blocked. Enable it in your browser to see your position during the walk.';
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          message = 'Location data is temporarily unavailable. We will keep trying to update your position.';
-        } else if (error.code === error.TIMEOUT) {
-          message = 'The request for your location timed out. Try checking your connection and permissions.';
-        }
-
-        setLocationStatus({
-          type: 'error',
-          message,
-        });
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 10000,
-        timeout: 20000,
-      }
-    );
-
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-    };
-  }, [stage]);
-
-
-  const mapCenter = useMemo(() => {
-    if (!routeResult?.pathCoordinates?.length) {
-      return defaultCenter;
-    }
-
-    const { pathCoordinates } = routeResult;
-    const { totalLat, totalLng } = pathCoordinates.reduce(
-      (totals, [lat, lng]) => ({
-        totalLat: totals.totalLat + lat,
-        totalLng: totals.totalLng + lng,
-      }),
-      { totalLat: 0, totalLng: 0 }
-    );
-
-    return [totalLat / pathCoordinates.length, totalLng / pathCoordinates.length];
-  }, [routeResult]);
-
-  const resetJourney = () => {
-    setStartLocation('');
-    setDestination('');
-    setStage('home');
-    setRouteResult(null);
+  const handleFindRoute = (e) => {
+    e.preventDefault();
     setFormFeedback(null);
-    setUserMessage('');
-    setSubmissionStatus(null);
-    setHasSubmittedMessage(false);
-  };
-
-  const handleFindRoute = (event) => {
-    event.preventDefault();
-    setFormFeedback(null);
-    setSubmissionStatus(null);
 
     if (!startLocation || !destination) {
-      setFormFeedback({
-        type: 'error',
-        message: 'Please select both a starting point and a destination.',
-      });
+      setFormFeedback({ type: "error", message: "Please select both a starting point and a destination." });
       return;
     }
-
     if (startLocation === destination) {
+      setFormFeedback({ type: "error", message: "Pick two different locations to discover a curated walk." });
+      return;
+    }
+    const key = `${startLocation}|${destination}`;
+    const route = sampleRoutes[key];
+    if (!route) {
       setFormFeedback({
-        type: 'error',
-        message: 'Pick two different locations to discover a curated walk.',
+        type: "info",
+        message: "We are still curating that path. Please choose another pair of locations.",
       });
       return;
     }
-
-    const routeKey = `${startLocation}|${destination}`;
-    const routeDetails = sampleRoutes[routeKey];
-
-    if (!routeDetails) {
-      setFormFeedback({
-        type: 'info',
-        message:
-          'We are still curating that path. Please choose another pair of locations while we finish mapping it.',
-      });
-      return;
-    }
-
-    const encouragement = kindnessMessages[Math.floor(Math.random() * kindnessMessages.length)];
-
-    setRouteResult({
-      ...routeDetails,
-      startLocation,
-      destination,
-      encouragement,
-      summary: `Curated walk from ${startLocation} to ${destination}.\n Estimated travel time: ${routeDetails.eta}.`,
-    });
-
-    setStage('message');
+    setRouteResult(route);
+    setStage("map");
   };
-
-  const handleSendMessage = (event) => {
-    event.preventDefault();
-
-    if (hasSubmittedMessage) {
-      setSubmissionStatus({
-        type: 'info',
-        message: 'You already shared a message for this walk. Tap Finish when you are ready to wrap up.',
-      });
-      return;
-    }
-
-
-    if (!userMessage.trim()) {
-      setSubmissionStatus({
-        type: 'error',
-        message: 'Please share a short note or tap Finish to skip this step.',
-      });
-      return;
-    }
-
-    setSubmissionStatus({
-      type: 'success',
-      message: 'Thanks! Your message was saved for future Mavericks to enjoy. Tap Finish to end your walk.',
-    });
-    setUserMessage('');
-    setHasSubmittedMessage(true);
-  };
-
-  const renderHeader = (subtitle) => (
-    <header className="text-center space-y-4">
-      <div className="mx-auto w-20 h-20 rounded-full bg-uta-blue flex items-center justify-center text-white text-3xl font-bold">
-        MW
-      </div>
-
-      <div className="space-y-1">
-        <h1 className="text-4xl font-extrabold text-uta-blue tracking-tight">MavWalk</h1>
-        <p className="text-uta-orange font-semibold uppercase text-sm tracking-[0.4em]">
-          UPLIFTING ROUTES FOR MAVERICKS
-        </p>
-        {subtitle && <p className="text-gray-600 text-base">{subtitle}</p>}
-      </div>
-    </header>
-  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-uta-blue via-white to-uta-orange flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-xl bg-white shadow-2xl rounded-3xl p-10 space-y-8">
-        {stage === 'home' && (
-          <>
-            {renderHeader('Choose your starting location and destination to begin.')}
+    <div className="min-h-screen flex flex-col text-lg">
+      <TopBar />
+      <BgPattern />
 
-            <form className="space-y-6" onSubmit={handleFindRoute}>
-              <div className="space-y-2">
-                <label
-                  htmlFor="startLocation"
-                  className="block text-sm font-semibold text-uta-blue uppercase tracking-wider"
-                >
-                  Starting From
-                </label>
-                <select
-                  id="startLocation"
-                  value={startLocation}
-                  onChange={(event) => setStartLocation(event.target.value)}
-                  className="w-full appearance-none rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-base text-uta-blue focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40"
-                >
-                  <option value="">Select a location</option>
-                  {campusLocations.map((location) => (
-                    <option key={`start-${location}`} value={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
+      <main className="flex-1 flex items-start sm:items-center justify-center px-4 py-12">
+        <div className="w-full max-w-[32rem] bg-white/95 backdrop-blur shadow-2xl rounded-[32px] p-10 sm:p-12 space-y-8">
+          {stage === "home" && (
+            <>
+              <HeroHeader />
+              <p className="text-center text-gray-600 text-base mt-3">
+                Choose your starting location and destination to begin.
+              </p>
+
+              <div className="mt-5 rounded-3xl border border-[#0F6AA8]/20 bg-white/90 shadow-md p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  {/* Location arrow icon */}
+                  <svg width="26" height="26" viewBox="0 0 24 24" className="text-[#0F6AA8]">
+                    <path
+                      fill="currentColor"
+                      d="M12 2L3 21l9-4 9 4L12 2z"
+                    />
+                  </svg>
+                  <h2 className="text-2xl font-bold text-[#0F6AA8]">Plan Your Journey</h2>
+                </div>
+                <p className="text-[#0F6AA8]/70 text-base mb-6">
+                  Get directions with encouraging messages along the way
+                </p>
+
+                <form className="space-y-5" onSubmit={handleFindRoute}>
+                  <div>
+                    <label className="block text-[#0F6AA8] text-lg font-medium mb-2">
+                      Starting From
+                    </label>
+                    <select
+                      value={startLocation}
+                      onChange={(e) => setStartLocation(e.target.value)}
+                      className="w-full rounded-2xl border border-[#0F6AA8]/20 bg-[#0F6AA8]/5 px-5 py-4 text-[#0F6AA8] text-lg focus:outline-none focus:ring-2 focus:ring-[#f5632a]/40"
+                    >
+                      <option value="">Enter starting location...</option>
+                      {campusLocations.map((loc) => (
+                        <option key={`s-${loc}`}>{loc}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#0F6AA8] text-lg font-medium mb-2">
+                      Destination
+                    </label>
+                    <select
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      className="w-full rounded-2xl border border-[#0F6AA8]/20 bg-[#0F6AA8]/5 px-5 py-4 text-[#0F6AA8] text-lg focus:outline-none focus:ring-2 focus:ring-[#f5632a]/40"
+                    >
+                      <option value="">Where are you going?</option>
+                      {campusLocations.map((loc) => (
+                        <option key={`d-${loc}`}>{loc}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full rounded-2xl bg-gradient-to-r from-[#320A6B] to-[#f5632a] px-6 py-4 text-xl text-white font-semibold shadow-lg hover:opacity-90 transition-transform hover:-translate-y-0.5"
+                  >
+                    Start My MavWalk
+                  </button>
+                </form>
+
+                {formFeedback && (
+                  <div
+                    className={`mt-6 rounded-2xl border px-5 py-4 text-base ${
+                      formFeedback.type === "error"
+                        ? "border-red-200 bg-red-50 text-red-700"
+                        : "border-[#0F6AA8]/20 bg-[#0F6AA8]/5 text-[#0F6AA8]"
+                    }`}
+                  >
+                    {formFeedback.message}
+                  </div>
+                )}
               </div>
+            </>
+          )}
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="destination"
-                  className="block text-sm font-semibold text-uta-blue uppercase tracking-wider"
+          {stage === "map" && routeResult && (
+            <>
+              <h2 className="text-center text-[#0F6AA8] font-bold text-2xl mb-4">Map Preview</h2>
+              <div className="overflow-hidden rounded-3xl border border-[#0F6AA8]/15 shadow-lg">
+                <MapContainer
+                  center={defaultCenter}
+                  zoom={17}
+                  style={{ height: "400px", width: "100%" }}
                 >
-                  Destination
-                </label>
-                <select
-                  id="destination"
-                  value={destination}
-                  onChange={(event) => setDestination(event.target.value)}
-                  className="w-full appearance-none rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-base text-uta-blue focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40"
-                >
-                  <option value="">Select a location</option>
-                  {campusLocations.map((location) => (
-                    <option key={`destination-${location}`} value={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
+                  <TileLayer
+                    attribution='&copy; OpenStreetMap contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker position={routeResult.startCoordinates}>
+                    <Tooltip direction="top" offset={[0, -20]} permanent>
+                      Start
+                    </Tooltip>
+                  </Marker>
+                  <Marker position={routeResult.destinationCoordinates}>
+                    <Tooltip direction="top" offset={[0, -20]} permanent>
+                      Destination
+                    </Tooltip>
+                  </Marker>
+                  <Polyline
+                    positions={routeResult.pathCoordinates}
+                    color="#f5632a"
+                    weight={5}
+                    dashArray="8 12"
+                  />
+                </MapContainer>
               </div>
 
               <button
-                type="submit"
-                className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
+                type="button"
+                onClick={() => {
+                  setStartLocation("");
+                  setDestination("");
+                  setRouteResult(null);
+                  setStage("home");
+                }}
+                className="w-full mt-6 rounded-2xl border border-[#f5632a]/40 px-6 py-4 text-xl font-semibold uppercase tracking-wider text-[#f5632a] shadow-md hover:-translate-y-0.5 hover:shadow-lg transition"
               >
-                Find My Route
+                New Route
               </button>
-            </form>
+            </>
+          )}
+        </div>
+      </main>
 
-            {formFeedback && (
-              <div
-                className={`rounded-2xl border px-4 py-4 text-base font-medium ${
-                  formFeedback.type === 'error'
-                    ? 'border-red-200 bg-red-50 text-red-700'
-                    : 'border-uta-blue/20 bg-uta-blue/5 text-uta-blue'
-                }`}
-              >
-                {formFeedback.message}
-              </div>
-            )}
-          </>
-        )}
-
-        {stage === 'message' && routeResult && (
-          <div className="space-y-8">
-            {renderHeader('A little encouragement before you head out!')}
-
-            <section className="rounded-3xl border border-uta-orange/30 bg-uta-orange/10 px-6 py-8 text-center space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-uta-orange">Today's Kind Note</p>
-              <p className="text-2xl font-bold text-uta-blue">{routeResult.encouragement}</p>
-              <p className="text-sm text-uta-blue/70">
-                Starting from <span className="font-semibold">{startLocation}</span> and heading to{' '}
-                <span className="font-semibold">{destination}</span>.
-              </p>
-            </section>
-
-            <button
-              type="button"
-              onClick={() => setStage('map')}
-              className="w-full rounded-2xl bg-uta-blue px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-blue/40"
-            >
-              Continue to Map
-            </button>
-          </div>
-        )}
-
-        {stage === 'map' && routeResult && (
-          <div className="space-y-6">
-            {renderHeader('Follow the highlighted path to reach your destination!')}
-
-            <div className="rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-5 py-5 text-uta-blue space-y-3">
-              <p className="text-base font-medium">{routeResult.summary}</p>
-              {routeResult.steps && (
-                <ol className="list-decimal list-inside space-y-1 text-sm text-uta-blue/80">
-                  {routeResult.steps.map((step, index) => (
-                    <li key={`route-step-${index}`}>{step}</li>
-                  ))}
-                </ol>
-              )}
-              {locationStatus && (
-                <div
-                  className={`rounded-xl border px-3 py-2 text-sm font-medium ${
-                    locationStatus.type === 'error'
-                      ? 'border-red-200 bg-red-50 text-red-700'
-                      : 'border-uta-blue/30 bg-white text-uta-blue'
-                  }`}
-                >
-                  {locationStatus.message}
-                </div>
-              )}
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-uta-blue/10 shadow-inner">
-              <MapContainer
-                center={mapCenter}
-                zoom={17}
-                style={{ height: '320px', width: '100%' }}
-                key={`${routeResult.startCoordinates}-${routeResult.destinationCoordinates}`}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <Marker position={routeResult.startCoordinates}>
-                  <Tooltip direction="top" offset={[0, -20]} permanent>
-                    {startLocation}
-                  </Tooltip>
-                </Marker>
-                <Marker position={routeResult.destinationCoordinates}>
-                  <Tooltip direction="top" offset={[0, -20]} permanent>
-                    {destination}
-                  </Tooltip>
-                </Marker>
-                {userLocation && (
-                  <Marker position={userLocation}>
-                    <Tooltip direction="top" offset={[0, -20]} permanent>
-                      You are here
-                    </Tooltip>
-                  </Marker>
-                )}
-                <Polyline positions={routeResult.pathCoordinates} color="#ff6f3c" weight={4} dashArray="8 12" />
-              </MapContainer>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setStage('completion')}
-              className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
-            >
-              I've Arrived
-            </button>
-          </div>
-        )}
-
-        {stage === 'completion' && (
-          <div className="space-y-6">
-            {renderHeader('Route Completed! Would you like to brighten someone else\'s walk?')}
-
-            <form className="space-y-4" onSubmit={handleSendMessage}>
-              <label htmlFor="kindMessage" className="block text-sm font-semibold text-uta-blue uppercase tracking-wider">
-                Leave a Message (optional)
-              </label>
-              <textarea
-                id="kindMessage"
-                value={userMessage}
-                onChange={(event) => setUserMessage(event.target.value)}
-                disabled={hasSubmittedMessage}
-                rows={4}
-                placeholder={
-                  hasSubmittedMessage
-                    ? 'You already left a note for this walk. Tap Finish to head back to the start.'
-                    : 'Share a kind thought for the next Maverick who walks this path...'
-                }
-                className={`w-full rounded-2xl border px-4 py-3 text-base focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40 ${
-                  hasSubmittedMessage
-                    ? 'border-uta-blue/10 bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'border-uta-blue/20 bg-uta-blue/5 text-uta-blue'
-                }`}
-              />
-
-              {submissionStatus && (
-                <div
-                  className={`rounded-2xl px-4 py-3 text-sm font-medium ${
-                    submissionStatus.type === 'success'
-                      ? 'bg-green-50 text-green-700 border border-green-200'
-                      : submissionStatus.type === 'error'
-                        ? 'bg-red-50 text-red-700 border border-red-200'
-                        : 'bg-uta-blue/10 text-uta-blue border border-uta-blue/20'
-                  }`}
-                >
-                  {submissionStatus.message}
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <button
-                  type="submit"
-                  className={`w-full rounded-2xl px-5 py-3 text-lg font-semibold uppercase tracking-wider shadow-lg transition-transform duration-200 focus:outline-none focus:ring-4 focus:ring-uta-blue/40 disabled:cursor-not-allowed disabled:opacity-60 ${
-                    hasSubmittedMessage
-                      ? 'bg-uta-blue/30 text-white shadow-none'
-                      : 'bg-uta-blue text-white hover:-translate-y-1 hover:shadow-xl'
-                  }`}
-                  disabled={isSavingMessage || hasSubmittedMessage}
-                >
-                  {isSavingMessage ? 'Saving...' : hasSubmittedMessage ? 'Message Sent' : 'Send Message'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={resetJourney}
-                  className="w-full rounded-2xl border border-uta-orange/40 px-5 py-3 text-lg font-semibold uppercase tracking-wider text-uta-orange shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-uta-orange/30"
-                >
-                  Finish
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-      </div>
-
-      <footer className="mt-8 text-center text-sm text-gray-500">
-        Early build, so features are not fully representative of final product.
-      </footer>
     </div>
   );
 };
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);
