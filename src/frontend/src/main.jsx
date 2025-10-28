@@ -8,6 +8,9 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import mavWalkLogo from './MavWalkLogo.png';
 import utaLogo from './142-1425701_university-of-texas-uta-logo-university-of-texas-at-arlington-logo.png';
+import { getMessages as apiGetMessages, postMessage as apiPostMessage } from './api';
+
+
 
 const defaultMarkerIcon = L.icon({
   iconUrl: markerIcon,
@@ -30,14 +33,7 @@ const campusLocations = [
   'University Center',
 ];
 
-const kindnessMessages = [
-  'You are exactly where you need to be today. Take a deep breath and enjoy the walk.',
-  'Another Maverick left this note for you: “You are stronger than this week’s deadlines.”',
-  'Someone believes in you. Keep your head up and keep moving forward.',
-  'Your smile might be the highlight of someone’s day. Share it generously!',
-  'You deserve to feel proud of yourself. This small walk is part of a big journey.',
-  'There is so much goodness waiting for you today. Thanks for being part of MavWalk!',
-];
+// 🔸 Removed the old kindnessMessages array
 
 const sampleRoutes = {
   'Central Library|Maverick Activities Center': {
@@ -122,18 +118,24 @@ const App = () => {
   const [isSavingMessage, setIsSavingMessage] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [hasSubmittedMessage, setHasSubmittedMessage] = useState(false);
+
+  // Map/location state
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState(null);
   const watchIdRef = useRef(null);
-  
 
+  // Message-fetching state (new)
+  const [encouragement, setEncouragement] = useState(null);
+  const [msgLoading, setMsgLoading] = useState(false);
+  const [msgError, setMsgError] = useState(null);
+
+  // Geolocation watcher lifecycle
   useEffect(() => {
     if (stage !== 'map') {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
-
       setUserLocation(null);
       setLocationStatus(null);
       return;
@@ -159,7 +161,6 @@ const App = () => {
       },
       (error) => {
         let message = 'We could not determine your current location.';
-
         if (error.code === error.PERMISSION_DENIED) {
           message = 'Location sharing is blocked. Enable it in your browser to see your position during the walk.';
         } else if (error.code === error.POSITION_UNAVAILABLE) {
@@ -167,17 +168,9 @@ const App = () => {
         } else if (error.code === error.TIMEOUT) {
           message = 'The request for your location timed out. Try checking your connection and permissions.';
         }
-
-        setLocationStatus({
-          type: 'error',
-          message,
-        });
+        setLocationStatus({ type: 'error', message });
       },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 10000,
-        timeout: 20000,
-      }
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
     );
 
     return () => {
@@ -188,12 +181,45 @@ const App = () => {
     };
   }, [stage]);
 
+  // 🔸 Fetch one encouragement when entering the message stage
+  useEffect(() => {
+    if (stage !== 'message') return;
+
+    let alive = true;
+    setMsgLoading(true);
+    setMsgError(null);
+    setEncouragement(null);
+
+    (async () => {
+      try {
+        const list = await apiGetMessages();
+        // Filter by chosen start/destination names; fall back to any if none match
+        const filtered = Array.isArray(list)
+          ? list.filter(m =>
+              (!startLocation || m.startLocation === startLocation) &&
+              (!destination  || m.destination   === destination)
+            )
+          : [];
+
+        const pool = (filtered.length ? filtered : list) || [];
+        if (pool.length) {
+          const pick = pool[Math.floor(Math.random() * pool.length)];
+          if (alive) setEncouragement(pick.message ?? null);
+        } else {
+          if (alive) setEncouragement(null);
+        }
+      } catch (e) {
+        if (alive) setMsgError(e.message || 'Failed to load messages');
+      } finally {
+        if (alive) setMsgLoading(false);
+      }
+    })();
+
+    return () => { alive = false; };
+  }, [stage, startLocation, destination]);
 
   const mapCenter = useMemo(() => {
-    if (!routeResult?.pathCoordinates?.length) {
-      return defaultCenter;
-    }
-
+    if (!routeResult?.pathCoordinates?.length) return defaultCenter;
     const { pathCoordinates } = routeResult;
     const { totalLat, totalLng } = pathCoordinates.reduce(
       (totals, [lat, lng]) => ({
@@ -202,7 +228,6 @@ const App = () => {
       }),
       { totalLat: 0, totalLng: 0 }
     );
-
     return [totalLat / pathCoordinates.length, totalLng / pathCoordinates.length];
   }, [routeResult]);
 
@@ -223,18 +248,12 @@ const App = () => {
     setSubmissionStatus(null);
 
     if (!startLocation || !destination) {
-      setFormFeedback({
-        type: 'error',
-        message: 'Please select both a starting point and a destination.',
-      });
+      setFormFeedback({ type: 'error', message: 'Please select both a starting point and a destination.' });
       return;
     }
 
     if (startLocation === destination) {
-      setFormFeedback({
-        type: 'error',
-        message: 'Pick two different locations to discover a curated walk.',
-      });
+      setFormFeedback({ type: 'error', message: 'Pick two different locations to discover a curated walk.' });
       return;
     }
 
@@ -244,28 +263,24 @@ const App = () => {
     if (!routeDetails) {
       setFormFeedback({
         type: 'info',
-        message:
-          'We are still curating that path. Please choose another pair of locations while we finish mapping it.',
+        message: 'We are still curating that path. Please choose another pair of locations while we finish mapping it.',
       });
       return;
     }
-
-    const encouragement = kindnessMessages[Math.floor(Math.random() * kindnessMessages.length)];
 
     setRouteResult({
       ...routeDetails,
       startLocation,
       destination,
-      encouragement,
       summary: `Curated walk from ${startLocation} to ${destination}.\n Estimated travel time: ${routeDetails.eta}.`,
     });
 
-    setStage('message');
+    setStage('message'); // the effect above will fetch the encouragement
   };
 
-  const handleSendMessage = (event) => {
+  const handleSendMessage = async (event) => {
     event.preventDefault();
-
+  
     if (hasSubmittedMessage) {
       setSubmissionStatus({
         type: 'info',
@@ -273,23 +288,41 @@ const App = () => {
       });
       return;
     }
-
-
-    if (!userMessage.trim()) {
+  
+    const trimmed = userMessage.trim();
+    if (!trimmed) {
       setSubmissionStatus({
         type: 'error',
         message: 'Please share a short note or tap Finish to skip this step.',
       });
       return;
     }
-
-    setSubmissionStatus({
-      type: 'success',
-      message: 'Thanks! Your message was saved for future Mavericks to enjoy. Tap Finish to end your walk.',
-    });
-    setUserMessage('');
-    setHasSubmittedMessage(true);
+  
+    setIsSavingMessage(true);
+    setSubmissionStatus(null);
+    try {
+      await apiPostMessage({
+        message: trimmed,
+        startLocationName: startLocation,        // uses the chosen names
+        destinationLocationName: destination,
+      });
+  
+      setSubmissionStatus({
+        type: 'success',
+        message: 'Thanks! Your message was saved for future Mavericks to enjoy. Tap Finish to end your walk.',
+      });
+      setUserMessage('');
+      setHasSubmittedMessage(true);
+    } catch (e) {
+      setSubmissionStatus({
+        type: 'error',
+        message: `Could not save your message. ${e.message || 'Please try again.'}`,
+      });
+    } finally {
+      setIsSavingMessage(false);
+    }
   };
+  
 
   const renderHeader = (subtitle) => (
     <header className="text-center space-y-4">
@@ -299,9 +332,7 @@ const App = () => {
 
       <div className="space-y-3">
         <h1 className="text-5xl font-bold text-purple-600">MavWalk</h1>
-        <p className="text-gray-600 text-base">
-          Navigate UTA campus with uplifting messages
-        </p>
+        <p className="text-gray-600 text-base">Navigate UTA campus with uplifting messages</p>
         {subtitle && <p className="text-gray-500 text-base mt-2">{subtitle}</p>}
       </div>
       
@@ -322,12 +353,15 @@ const App = () => {
     <div className="min-h-screen bg-blue-600 relative overflow-hidden">
       {/* UTA Logo pattern background */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url(${utaLogo})`,
-          backgroundSize: '200px 200px',
-          backgroundRepeat: 'repeat',
-          backgroundPosition: 'center'
-        }}></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${utaLogo})`,
+            backgroundSize: '200px 200px',
+            backgroundRepeat: 'repeat',
+            backgroundPosition: 'center'
+          }}
+        />
       </div>
 
       {/* Navigation Bar */}
@@ -365,9 +399,7 @@ const App = () => {
       {/* Hero Banner */}
       {stage === 'home' && (
         <div className="relative z-10 bg-orange-500 text-white text-center py-4 px-6">
-          <p className="text-base font-medium">
-            Live Demo: Experience MavWalk's campus navigation system
-          </p>
+          <p className="text-base font-medium">Live Demo: Experience MavWalk's campus navigation system</p>
         </div>
       )}
 
@@ -501,7 +533,22 @@ const App = () => {
 
               <section className="rounded-2xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 px-6 py-8 text-center space-y-4">
                 <p className="text-sm font-semibold uppercase tracking-wider text-orange-600">Today's Kind Note</p>
-                <p className="text-2xl font-bold text-gray-800 leading-relaxed">{routeResult.encouragement}</p>
+
+                {/* Loading / Error / Empty / Success states */}
+                {msgLoading && (
+                  <p className="text-2xl font-bold text-gray-800 leading-relaxed">Loading a kind note…</p>
+                )}
+                {msgError && !msgLoading && (
+                  <p className="text-2xl font-bold text-red-700 leading-relaxed">
+                    Could not load a note. Please try again.
+                  </p>
+                )}
+                {!msgLoading && !msgError && (
+                  <p className="text-2xl font-bold text-gray-800 leading-relaxed">
+                    {encouragement ?? 'No notes yet for this route. Be the first to leave one!'}
+                  </p>
+                )}
+
                 <p className="text-base text-gray-600">
                   Starting from <span className="font-semibold text-gray-800">{startLocation}</span> and heading to{' '}
                   <span className="font-semibold text-gray-800">{destination}</span>.
@@ -588,7 +635,7 @@ const App = () => {
 
           {stage === 'completion' && (
             <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
-              {renderHeader('Route Completed! Would you like to brighten someone else\'s walk?')}
+              {renderHeader("Route Completed! Would you like to brighten someone else's walk?")}
 
               <form className="space-y-4" onSubmit={handleSendMessage}>
                 <label htmlFor="kindMessage" className="block text-base font-semibold text-gray-700">
