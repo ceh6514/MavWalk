@@ -203,12 +203,12 @@ const seedRoutes = () => {
       return;
     }
 
-    execute(
-      'INSERT INTO routes (start_location_id, end_location_id, eta, summary) VALUES (?, ?, ?, ?)',
+    const insertedRoute = querySingle(
+      'INSERT INTO routes (start_location_id, end_location_id, eta, summary) VALUES (?, ?, ?, ?) RETURNING id',
       [startLocation.id, destinationLocation.id, route.eta, route.summary]
     );
 
-    const insertedRouteId = querySingle('SELECT last_insert_rowid() AS id').id;
+    const insertedRouteId = insertedRoute.id;
 
     route.pathCoordinates.forEach(([latitude, longitude], index) => {
       execute(
@@ -584,7 +584,7 @@ const createWalkRequest = ({ userId, startLocationName, destinationLocationName 
   const route = getRouteBetweenLocations(startLocationName, destinationLocationName);
   const eta = route ? route.eta : '7 minutes';
 
-  execute(
+  const insertedWalk = querySingle(
     `INSERT INTO walk_requests (
        user_id,
        route_id,
@@ -595,7 +595,7 @@ const createWalkRequest = ({ userId, startLocationName, destinationLocationName 
        buddy_latitude,
        buddy_longitude,
        eta
-     ) VALUES (?, ?, ?, ?, 'pending', NULL, ?, ?, ?)` ,
+     ) VALUES (?, ?, ?, ?, 'pending', NULL, ?, ?, ?) RETURNING id` ,
     [
       userId,
       route ? route.id : null,
@@ -607,8 +607,7 @@ const createWalkRequest = ({ userId, startLocationName, destinationLocationName 
     ]
   );
 
-  const insertedId = querySingle('SELECT last_insert_rowid() AS id').id;
-  return getWalkRequestById(insertedId);
+  return getWalkRequestById(insertedWalk.id);
 };
 
 const joinWalkRequest = (walkId, buddyId) => {
@@ -643,9 +642,9 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
     ? getRouteBetweenLocations(startLocationName, destinationLocationName)
     : null;
 
-  execute(
+  const insertedMessage = querySingle(
     `INSERT INTO messages (message, route_id, start_location_id, end_location_id)
-     VALUES (?, ?, ?, ?)` ,
+     VALUES (?, ?, ?, ?) RETURNING id` ,
     [
       message.trim(),
       route ? route.id : null,
@@ -653,8 +652,6 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
       destinationLocation ? destinationLocation.id : null,
     ]
   );
-
-  const insertedId = querySingle('SELECT last_insert_rowid() AS id').id;
 
   return querySingle(
     `SELECT
@@ -667,7 +664,7 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
      LEFT JOIN locations start ON start.id = m.start_location_id
      LEFT JOIN locations destination ON destination.id = m.end_location_id
      WHERE m.id = ?`,
-    [insertedId]
+    [insertedMessage.id]
   );
 };
 
