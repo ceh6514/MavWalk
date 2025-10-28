@@ -9,3 +9,7 @@ src/backend/data/*.db
 
 # Logs
 npm-debug.log*
+node_modules/
+.DS_Store
+dist/
+.vite/
