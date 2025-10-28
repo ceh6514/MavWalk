@@ -55,6 +55,24 @@ const execute = (sql, params = []) => {
   }
 };
 
+const executeInsertAndGetId = (sql, params = []) => {
+  const formattedSql = formatSql(sql, params);
+  const wrappedSql = `BEGIN; ${formattedSql}; SELECT last_insert_rowid() AS id; COMMIT;`;
+  const result = spawnSync('sqlite3', ['-json', databasePath, wrappedSql], { encoding: 'utf8' });
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || 'SQLite insert failed.');
+  }
+
+  const trimmedOutput = result.stdout.trim();
+  if (!trimmedOutput) {
+    throw new Error('Failed to retrieve inserted row id.');
+  }
+
+  const [row] = JSON.parse(trimmedOutput);
+  return row ? row.id : null;
+};
+
 const query = (sql, params = []) => {
   const formattedSql = formatSql(sql, params);
   const result = spawnSync('sqlite3', ['-json', databasePath, formattedSql], { encoding: 'utf8' });
@@ -203,12 +221,10 @@ const seedRoutes = () => {
       return;
     }
 
-    execute(
+    const insertedRouteId = executeInsertAndGetId(
       'INSERT INTO routes (start_location_id, end_location_id, eta, summary) VALUES (?, ?, ?, ?)',
       [startLocation.id, destinationLocation.id, route.eta, route.summary]
     );
-
-    const insertedRouteId = querySingle('SELECT last_insert_rowid() AS id').id;
 
     route.pathCoordinates.forEach(([latitude, longitude], index) => {
       execute(
@@ -584,7 +600,7 @@ const createWalkRequest = ({ userId, startLocationName, destinationLocationName 
   const route = getRouteBetweenLocations(startLocationName, destinationLocationName);
   const eta = route ? route.eta : '7 minutes';
 
-  execute(
+  const insertedWalkId = executeInsertAndGetId(
     `INSERT INTO walk_requests (
        user_id,
        route_id,
@@ -607,8 +623,7 @@ const createWalkRequest = ({ userId, startLocationName, destinationLocationName 
     ]
   );
 
-  const insertedId = querySingle('SELECT last_insert_rowid() AS id').id;
-  return getWalkRequestById(insertedId);
+  return getWalkRequestById(insertedWalkId);
 };
 
 const joinWalkRequest = (walkId, buddyId) => {
@@ -643,7 +658,7 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
     ? getRouteBetweenLocations(startLocationName, destinationLocationName)
     : null;
 
-  execute(
+  const insertedMessageId = executeInsertAndGetId(
     `INSERT INTO messages (message, route_id, start_location_id, end_location_id)
      VALUES (?, ?, ?, ?)` ,
     [
@@ -653,8 +668,6 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
       destinationLocation ? destinationLocation.id : null,
     ]
   );
-
-  const insertedId = querySingle('SELECT last_insert_rowid() AS id').id;
 
   return querySingle(
     `SELECT
@@ -667,7 +680,7 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
      LEFT JOIN locations start ON start.id = m.start_location_id
      LEFT JOIN locations destination ON destination.id = m.end_location_id
      WHERE m.id = ?`,
-    [insertedId]
+    [insertedMessageId]
   );
 };
 
