@@ -6,6 +6,8 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import mavWalkLogo from './MavWalkLogo.png';
+import utaLogo from './142-1425701_university-of-texas-uta-logo-university-of-texas-at-arlington-logo.png';
 
 const defaultMarkerIcon = L.icon({
   iconUrl: markerIcon,
@@ -291,254 +293,366 @@ const App = () => {
 
   const renderHeader = (subtitle) => (
     <header className="text-center space-y-4">
-      <div className="mx-auto w-20 h-20 rounded-full bg-uta-blue flex items-center justify-center text-white text-3xl font-bold">
-        MW
+      <div className="mx-auto w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-lg p-3">
+        <img src={mavWalkLogo} alt="MavWalk Logo" className="w-full h-full object-contain" />
       </div>
 
-      <div className="space-y-1">
-        <h1 className="text-4xl font-extrabold text-uta-blue tracking-tight">MavWalk</h1>
-        <p className="text-uta-orange font-semibold uppercase text-sm tracking-[0.4em]">
-          UPLIFTING ROUTES FOR MAVERICKS
+      <div className="space-y-3">
+        <h1 className="text-5xl font-bold text-purple-600">MavWalk</h1>
+        <p className="text-gray-600 text-base">
+          Navigate UTA campus with uplifting messages
         </p>
-        {subtitle && <p className="text-gray-600 text-base">{subtitle}</p>}
+        {subtitle && <p className="text-gray-500 text-base mt-2">{subtitle}</p>}
+      </div>
+      
+      <div className="flex items-center justify-center gap-8 text-base text-gray-500 pt-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">👥</span>
+          <span>2,847 walks today</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-lg">❤️</span>
+          <span>1,293 messages shared</span>
+        </div>
       </div>
     </header>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-uta-blue via-white to-uta-orange flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-xl bg-white shadow-2xl rounded-3xl p-10 space-y-8">
-        {stage === 'home' && (
-          <>
-            {renderHeader('Choose your starting location and destination to begin.')}
+    <div className="min-h-screen bg-blue-600 relative overflow-hidden">
+      {/* UTA Logo pattern background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url(${utaLogo})`,
+          backgroundSize: '200px 200px',
+          backgroundRepeat: 'repeat',
+          backgroundPosition: 'center'
+        }}></div>
+      </div>
 
-            <form className="space-y-6" onSubmit={handleFindRoute}>
-              <div className="space-y-2">
-                <label
-                  htmlFor="startLocation"
-                  className="block text-sm font-semibold text-uta-blue uppercase tracking-wider"
-                >
-                  Starting From
-                </label>
-                <select
-                  id="startLocation"
-                  value={startLocation}
-                  onChange={(event) => setStartLocation(event.target.value)}
-                  className="w-full appearance-none rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-base text-uta-blue focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40"
-                >
-                  <option value="">Select a location</option>
-                  {campusLocations.map((location) => (
-                    <option key={`start-${location}`} value={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
+      {/* Navigation Bar */}
+      <nav className="relative z-10 bg-blue-600 shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 flex items-center justify-center">
+              <img src={mavWalkLogo} alt="MavWalk" className="w-full h-full object-contain" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-3xl font-bold text-white">MavWalk</span>
+              <span className="bg-orange-500 text-white text-sm font-semibold px-2.5 py-1 rounded">BETA</span>
+            </div>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#" className="text-white hover:text-gray-200 font-medium text-base">Features</a>
+            <a href="#" className="text-white hover:text-gray-200 font-medium text-base">Campus Map</a>
+            <a href="#" className="text-white hover:text-gray-200 font-medium text-base">Community</a>
+            <a href="#" className="text-white hover:text-gray-200 font-medium text-base">Support</a>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button className="bg-green-500 text-white px-5 py-2.5 rounded-lg font-semibold text-base flex items-center gap-2 hover:bg-green-600 transition-colors">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              Live
+            </button>
+            <button className="border border-white/30 px-5 py-2.5 rounded-lg font-semibold text-base text-white hover:bg-white/10 transition-colors">
+              Sign In
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Banner */}
+      {stage === 'home' && (
+        <div className="relative z-10 bg-orange-500 text-white text-center py-4 px-6">
+          <p className="text-base font-medium">
+            Live Demo: Experience MavWalk's campus navigation system
+          </p>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col items-center justify-center px-4 py-12">
+        <div className="w-full max-w-xl">
+          {stage === 'home' && (
+            <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+              {renderHeader()}
+
+              {/* Plan Your Journey Section */}
+              <div className="pt-4">
+                <div className="border-2 border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                    <h2 className="text-xl font-bold text-gray-800">Plan Your Journey</h2>
+                  </div>
+                  <p className="text-base text-gray-600 mb-6">
+                    Get directions with encouraging messages along the way
+                  </p>
+
+                  <form className="space-y-5" onSubmit={handleFindRoute}>
+                    {/* Starting From */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                        <span className="text-green-600 text-lg">📍</span>
+                        Starting From
+                      </label>
+                      <select
+                        id="startLocation"
+                        value={startLocation}
+                        onChange={(event) => setStartLocation(event.target.value)}
+                        className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-4 text-base text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
+                      >
+                        <option value="">Enter starting location...</option>
+                        {campusLocations.map((location) => (
+                          <option key={`start-${location}`} value={location}>
+                            {location}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Swap Button */}
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        className="w-12 h-12 bg-blue-100 hover:bg-blue-200 rounded-full flex items-center justify-center text-blue-600 transition-colors"
+                        onClick={() => {
+                          const temp = startLocation;
+                          setStartLocation(destination);
+                          setDestination(temp);
+                        }}
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Destination */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                        <span className="text-orange-600 text-lg">🎯</span>
+                        Destination
+                      </label>
+                      <select
+                        id="destination"
+                        value={destination}
+                        onChange={(event) => setDestination(event.target.value)}
+                        className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-4 text-base text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
+                      >
+                        <option value="">Where are you going?</option>
+                        {campusLocations.map((location) => (
+                          <option key={`destination-${location}`} value={location}>
+                            {location}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Start Button */}
+                    <button
+                      type="submit"
+                      className="w-full rounded-xl bg-gradient-to-r from-purple-500 to-orange-500 px-6 py-4 text-white text-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                      Start My MavWalk
+                    </button>
+                  </form>
+
+                  {formFeedback && (
+                    <div
+                      className={`mt-4 rounded-xl border px-4 py-3 text-base font-medium ${
+                        formFeedback.type === 'error'
+                          ? 'border-red-200 bg-red-50 text-red-700'
+                          : 'border-blue-200 bg-blue-50 text-blue-700'
+                      }`}
+                    >
+                      {formFeedback.message}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="destination"
-                  className="block text-sm font-semibold text-uta-blue uppercase tracking-wider"
-                >
-                  Destination
-                </label>
-                <select
-                  id="destination"
-                  value={destination}
-                  onChange={(event) => setDestination(event.target.value)}
-                  className="w-full appearance-none rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-4 py-3 text-base text-uta-blue focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40"
-                >
-                  <option value="">Select a location</option>
-                  {campusLocations.map((location) => (
-                    <option key={`destination-${location}`} value={location}>
+              {/* Popular Destinations */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-base font-bold text-gray-800 mb-3">Popular Destinations</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {campusLocations.slice(0, 4).map((location) => (
+                    <button
+                      key={`popular-${location}`}
+                      onClick={() => setDestination(location)}
+                      className="text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-700 border border-gray-200 hover:border-gray-300 transition-all"
+                    >
                       {location}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {stage === 'message' && routeResult && (
+            <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+              {renderHeader('A little encouragement before you head out!')}
+
+              <section className="rounded-2xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 px-6 py-8 text-center space-y-4">
+                <p className="text-sm font-semibold uppercase tracking-wider text-orange-600">Today's Kind Note</p>
+                <p className="text-2xl font-bold text-gray-800 leading-relaxed">{routeResult.encouragement}</p>
+                <p className="text-base text-gray-600">
+                  Starting from <span className="font-semibold text-gray-800">{startLocation}</span> and heading to{' '}
+                  <span className="font-semibold text-gray-800">{destination}</span>.
+                </p>
+              </section>
+
+              <button
+                type="button"
+                onClick={() => setStage('map')}
+                className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-4 text-white text-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              >
+                Continue to Map
+              </button>
+            </div>
+          )}
+
+          {stage === 'map' && routeResult && (
+            <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+              {renderHeader('Follow the highlighted path to reach your destination!')}
+
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 space-y-3">
+                <p className="text-base font-semibold text-gray-800">{routeResult.summary}</p>
+                {routeResult.steps && (
+                  <ol className="list-decimal list-inside space-y-2 text-base text-gray-600">
+                    {routeResult.steps.map((step, index) => (
+                      <li key={`route-step-${index}`}>{step}</li>
+                    ))}
+                  </ol>
+                )}
+                {locationStatus && (
+                  <div
+                    className={`rounded-lg border px-3 py-2 text-base font-medium ${
+                      locationStatus.type === 'error'
+                        ? 'border-red-200 bg-red-50 text-red-700'
+                        : 'border-blue-200 bg-blue-50 text-blue-700'
+                    }`}
+                  >
+                    {locationStatus.message}
+                  </div>
+                )}
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-lg">
+                <MapContainer
+                  center={mapCenter}
+                  zoom={17}
+                  style={{ height: '320px', width: '100%' }}
+                  key={`${routeResult.startCoordinates}-${routeResult.destinationCoordinates}`}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker position={routeResult.startCoordinates}>
+                    <Tooltip direction="top" offset={[0, -20]} permanent>
+                      {startLocation}
+                    </Tooltip>
+                  </Marker>
+                  <Marker position={routeResult.destinationCoordinates}>
+                    <Tooltip direction="top" offset={[0, -20]} permanent>
+                      {destination}
+                    </Tooltip>
+                  </Marker>
+                  {userLocation && (
+                    <Marker position={userLocation}>
+                      <Tooltip direction="top" offset={[0, -20]} permanent>
+                        You are here
+                      </Tooltip>
+                    </Marker>
+                  )}
+                  <Polyline positions={routeResult.pathCoordinates} color="#f97316" weight={4} dashArray="8 12" />
+                </MapContainer>
               </div>
 
               <button
-                type="submit"
-                className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-bold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
+                type="button"
+                onClick={() => setStage('completion')}
+                className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white text-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               >
-                Find My Route
+                I've Arrived
               </button>
-            </form>
-
-            {formFeedback && (
-              <div
-                className={`rounded-2xl border px-4 py-4 text-base font-medium ${
-                  formFeedback.type === 'error'
-                    ? 'border-red-200 bg-red-50 text-red-700'
-                    : 'border-uta-blue/20 bg-uta-blue/5 text-uta-blue'
-                }`}
-              >
-                {formFeedback.message}
-              </div>
-            )}
-          </>
-        )}
-
-        {stage === 'message' && routeResult && (
-          <div className="space-y-8">
-            {renderHeader('A little encouragement before you head out!')}
-
-            <section className="rounded-3xl border border-uta-orange/30 bg-uta-orange/10 px-6 py-8 text-center space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-uta-orange">Today's Kind Note</p>
-              <p className="text-2xl font-bold text-uta-blue">{routeResult.encouragement}</p>
-              <p className="text-sm text-uta-blue/70">
-                Starting from <span className="font-semibold">{startLocation}</span> and heading to{' '}
-                <span className="font-semibold">{destination}</span>.
-              </p>
-            </section>
-
-            <button
-              type="button"
-              onClick={() => setStage('map')}
-              className="w-full rounded-2xl bg-uta-blue px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-blue/40"
-            >
-              Continue to Map
-            </button>
-          </div>
-        )}
-
-        {stage === 'map' && routeResult && (
-          <div className="space-y-6">
-            {renderHeader('Follow the highlighted path to reach your destination!')}
-
-            <div className="rounded-2xl border border-uta-blue/20 bg-uta-blue/5 px-5 py-5 text-uta-blue space-y-3">
-              <p className="text-base font-medium">{routeResult.summary}</p>
-              {routeResult.steps && (
-                <ol className="list-decimal list-inside space-y-1 text-sm text-uta-blue/80">
-                  {routeResult.steps.map((step, index) => (
-                    <li key={`route-step-${index}`}>{step}</li>
-                  ))}
-                </ol>
-              )}
-              {locationStatus && (
-                <div
-                  className={`rounded-xl border px-3 py-2 text-sm font-medium ${
-                    locationStatus.type === 'error'
-                      ? 'border-red-200 bg-red-50 text-red-700'
-                      : 'border-uta-blue/30 bg-white text-uta-blue'
-                  }`}
-                >
-                  {locationStatus.message}
-                </div>
-              )}
             </div>
+          )}
 
-            <div className="overflow-hidden rounded-2xl border border-uta-blue/10 shadow-inner">
-              <MapContainer
-                center={mapCenter}
-                zoom={17}
-                style={{ height: '320px', width: '100%' }}
-                key={`${routeResult.startCoordinates}-${routeResult.destinationCoordinates}`}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <Marker position={routeResult.startCoordinates}>
-                  <Tooltip direction="top" offset={[0, -20]} permanent>
-                    {startLocation}
-                  </Tooltip>
-                </Marker>
-                <Marker position={routeResult.destinationCoordinates}>
-                  <Tooltip direction="top" offset={[0, -20]} permanent>
-                    {destination}
-                  </Tooltip>
-                </Marker>
-                {userLocation && (
-                  <Marker position={userLocation}>
-                    <Tooltip direction="top" offset={[0, -20]} permanent>
-                      You are here
-                    </Tooltip>
-                  </Marker>
-                )}
-                <Polyline positions={routeResult.pathCoordinates} color="#ff6f3c" weight={4} dashArray="8 12" />
-              </MapContainer>
-            </div>
+          {stage === 'completion' && (
+            <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+              {renderHeader('Route Completed! Would you like to brighten someone else\'s walk?')}
 
-            <button
-              type="button"
-              onClick={() => setStage('completion')}
-              className="w-full rounded-2xl bg-uta-orange px-5 py-3 text-lg font-semibold uppercase tracking-wider text-white shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-uta-orange/50"
-            >
-              I've Arrived
-            </button>
-          </div>
-        )}
-
-        {stage === 'completion' && (
-          <div className="space-y-6">
-            {renderHeader('Route Completed! Would you like to brighten someone else\'s walk?')}
-
-            <form className="space-y-4" onSubmit={handleSendMessage}>
-              <label htmlFor="kindMessage" className="block text-sm font-semibold text-uta-blue uppercase tracking-wider">
-                Leave a Message (optional)
-              </label>
-              <textarea
-                id="kindMessage"
-                value={userMessage}
-                onChange={(event) => setUserMessage(event.target.value)}
-                disabled={hasSubmittedMessage}
-                rows={4}
-                placeholder={
-                  hasSubmittedMessage
-                    ? 'You already left a note for this walk. Tap Finish to head back to the start.'
-                    : 'Share a kind thought for the next Maverick who walks this path...'
-                }
-                className={`w-full rounded-2xl border px-4 py-3 text-base focus:border-uta-orange focus:outline-none focus:ring-2 focus:ring-uta-orange/40 ${
-                  hasSubmittedMessage
-                    ? 'border-uta-blue/10 bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'border-uta-blue/20 bg-uta-blue/5 text-uta-blue'
-                }`}
-              />
-
-              {submissionStatus && (
-                <div
-                  className={`rounded-2xl px-4 py-3 text-sm font-medium ${
-                    submissionStatus.type === 'success'
-                      ? 'bg-green-50 text-green-700 border border-green-200'
-                      : submissionStatus.type === 'error'
-                        ? 'bg-red-50 text-red-700 border border-red-200'
-                        : 'bg-uta-blue/10 text-uta-blue border border-uta-blue/20'
-                  }`}
-                >
-                  {submissionStatus.message}
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <button
-                  type="submit"
-                  className={`w-full rounded-2xl px-5 py-3 text-lg font-semibold uppercase tracking-wider shadow-lg transition-transform duration-200 focus:outline-none focus:ring-4 focus:ring-uta-blue/40 disabled:cursor-not-allowed disabled:opacity-60 ${
+              <form className="space-y-4" onSubmit={handleSendMessage}>
+                <label htmlFor="kindMessage" className="block text-base font-semibold text-gray-700">
+                  Leave a Message (optional)
+                </label>
+                <textarea
+                  id="kindMessage"
+                  value={userMessage}
+                  onChange={(event) => setUserMessage(event.target.value)}
+                  disabled={hasSubmittedMessage}
+                  rows={4}
+                  placeholder={
                     hasSubmittedMessage
-                      ? 'bg-uta-blue/30 text-white shadow-none'
-                      : 'bg-uta-blue text-white hover:-translate-y-1 hover:shadow-xl'
+                      ? 'You already left a note for this walk. Tap Finish to head back to the start.'
+                      : 'Share a kind thought for the next Maverick who walks this path...'
+                  }
+                  className={`w-full rounded-xl border px-4 py-3 text-base focus:outline-none focus:ring-2 transition-all ${
+                    hasSubmittedMessage
+                      ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:ring-blue-200'
                   }`}
-                  disabled={isSavingMessage || hasSubmittedMessage}
-                >
-                  {isSavingMessage ? 'Saving...' : hasSubmittedMessage ? 'Message Sent' : 'Send Message'}
-                </button>
+                />
 
-                <button
-                  type="button"
-                  onClick={resetJourney}
-                  className="w-full rounded-2xl border border-uta-orange/40 px-5 py-3 text-lg font-semibold uppercase tracking-wider text-uta-orange shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-uta-orange/30"
-                >
-                  Finish
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+                {submissionStatus && (
+                  <div
+                    className={`rounded-xl px-4 py-3 text-base font-medium ${
+                      submissionStatus.type === 'success'
+                        ? 'bg-green-50 text-green-700 border border-green-200'
+                        : submissionStatus.type === 'error'
+                          ? 'bg-red-50 text-red-700 border border-red-200'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
+                    }`}
+                  >
+                    {submissionStatus.message}
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <button
+                    type="submit"
+                    className={`w-full rounded-xl px-6 py-4 text-white text-lg font-bold shadow-lg transition-all duration-200 ${
+                      hasSubmittedMessage
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
+                    }`}
+                    disabled={isSavingMessage || hasSubmittedMessage}
+                  >
+                    {isSavingMessage ? 'Saving...' : hasSubmittedMessage ? 'Message Sent' : 'Send Message'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={resetJourney}
+                    className="w-full rounded-xl border-2 border-orange-500 px-6 py-4 text-orange-500 text-lg font-bold hover:bg-orange-50 transition-all duration-200"
+                  >
+                    Finish
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
       </div>
 
-      <footer className="mt-8 text-center text-sm text-gray-500">
-        Early build, so features are not fully representative of final product.
-      </footer>
     </div>
   );
 };
