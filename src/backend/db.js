@@ -55,6 +55,24 @@ const execute = (sql, params = []) => {
   }
 };
 
+const executeInsertAndGetId = (sql, params = []) => {
+  const formattedSql = formatSql(sql, params);
+  const wrappedSql = `BEGIN; ${formattedSql}; SELECT last_insert_rowid() AS id; COMMIT;`;
+  const result = spawnSync('sqlite3', ['-json', databasePath, wrappedSql], { encoding: 'utf8' });
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || 'SQLite insert failed.');
+  }
+
+  const trimmedOutput = result.stdout.trim();
+  if (!trimmedOutput) {
+    throw new Error('Failed to retrieve inserted row id.');
+  }
+
+  const [row] = JSON.parse(trimmedOutput);
+  return row ? row.id : null;
+};
+
 const query = (sql, params = []) => {
   const formattedSql = formatSql(sql, params);
   const result = spawnSync('sqlite3', ['-json', databasePath, formattedSql], { encoding: 'utf8' });
