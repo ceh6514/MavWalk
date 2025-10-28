@@ -240,6 +240,28 @@ app.post('/api/messages', (req, res) => {
     }
 });
 
+// Return ONE random message, optionally filtered by start/destination (names)
+app.get('/api/messages/random', (req, res) => {
+    try {
+      const { start, destination } = req.query;
+      const all = getMessages(); // same source as /api/messages
+  
+      // getMessages() returns objects with { message, startLocation, destination } already joined
+      const filtered = all.filter(m =>
+        (start ? m.startLocation === start : true) &&
+        (destination ? m.destination === destination : true)
+      );
+  
+      if (filtered.length === 0) return res.json(null);
+  
+      const pick = filtered[Math.floor(Math.random() * filtered.length)];
+      return res.json(pick);
+    } catch (error) {
+      console.error('Failed to get random message:', error);
+      res.status(500).json({ message: 'Unable to load a random message.' });
+    }
+  });
+  
 
 app.listen(port, () => {
   console.log(`MavWalk server (v3) listening at http://localhost:${port}`);

@@ -18,3 +18,11 @@ export async function getMessages() {
 export async function postMessage(payload) {
   return request('/api/messages', { method: 'POST', body: payload });
 }
+
+export async function getRandomMessage({ start, destination } = {}) {
+  const qs = new URLSearchParams();
+  if (start) qs.set('start', start);
+  if (destination) qs.set('destination', destination);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return request(`/api/messages/random${suffix}`);
+}

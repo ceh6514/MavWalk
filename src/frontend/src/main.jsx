@@ -8,7 +8,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import mavWalkLogo from './MavWalkLogo.png';
 import utaLogo from './142-1425701_university-of-texas-uta-logo-university-of-texas-at-arlington-logo.png';
-import { getMessages as apiGetMessages, postMessage as apiPostMessage } from './api';
+import { getMessages as apiGetMessages, getRandomMessage, postMessage as apiPostMessage } from './api';
 
 
 
@@ -182,41 +182,29 @@ const App = () => {
   }, [stage]);
 
   // 🔸 Fetch one encouragement when entering the message stage
-  useEffect(() => {
-    if (stage !== 'message') return;
+  // Fetch one encouragement when entering the message stage (server-side random)
+useEffect(() => {
+  if (stage !== 'message') return;
 
-    let alive = true;
-    setMsgLoading(true);
-    setMsgError(null);
-    setEncouragement(null);
+  let alive = true;
+  setMsgLoading(true);
+  setMsgError(null);
+  setEncouragement(null);
 
-    (async () => {
-      try {
-        const list = await apiGetMessages();
-        // Filter by chosen start/destination names; fall back to any if none match
-        const filtered = Array.isArray(list)
-          ? list.filter(m =>
-              (!startLocation || m.startLocation === startLocation) &&
-              (!destination  || m.destination   === destination)
-            )
-          : [];
+  (async () => {
+    try {
+      const row = await getRandomMessage({ start: startLocation, destination });
+      if (alive) setEncouragement(row?.message ?? null);
+    } catch (e) {
+      if (alive) setMsgError(e.message || 'Failed to load messages');
+    } finally {
+      if (alive) setMsgLoading(false);
+    }
+  })();
 
-        const pool = (filtered.length ? filtered : list) || [];
-        if (pool.length) {
-          const pick = pool[Math.floor(Math.random() * pool.length)];
-          if (alive) setEncouragement(pick.message ?? null);
-        } else {
-          if (alive) setEncouragement(null);
-        }
-      } catch (e) {
-        if (alive) setMsgError(e.message || 'Failed to load messages');
-      } finally {
-        if (alive) setMsgLoading(false);
-      }
-    })();
+  return () => { alive = false; };
+}, [stage, startLocation, destination]);
 
-    return () => { alive = false; };
-  }, [stage, startLocation, destination]);
 
   const mapCenter = useMemo(() => {
     if (!routeResult?.pathCoordinates?.length) return defaultCenter;
@@ -303,8 +291,8 @@ const App = () => {
     try {
       await apiPostMessage({
         message: trimmed,
-        startLocationName: startLocation,        // uses the chosen names
-        destinationLocationName: destination,
+        startLocation: startLocation,
+        destination: destination,
       });
   
       setSubmissionStatus({
