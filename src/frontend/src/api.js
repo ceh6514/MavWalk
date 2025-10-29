@@ -15,6 +15,14 @@ export async function getMessages() {
   return request('/api/messages');
 }
 
+export async function getRoutes({ start, destination } = {}) {
+  const qs = new URLSearchParams();
+  if (start) qs.set('start', start);
+  if (destination) qs.set('destination', destination);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return request(`/api/routes${suffix}`);
+}
+
 export async function postMessage(payload) {
   return request('/api/messages', { method: 'POST', body: payload });
 }

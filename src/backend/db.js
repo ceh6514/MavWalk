@@ -95,13 +95,17 @@ const querySingle = (sql, params = []) => {
 };
 
 const campusLocationSeedData = [
-  { name: 'Central Library', latitude: 32.72991314809259, longitude: -97.11290672883602 },
-  { name: 'College Park Center', latitude: 32.730652363101214, longitude: -97.10803828570232 },
-  { name: 'Engineering Research Building', latitude: 32.73344190653296, longitude: -97.11322886238746 },
-  { name: 'Fine Arts Building', latitude: 32.73050397086501, longitude: -97.11513947404578 },
-  { name: 'Maverick Activities Center', latitude: 32.73195397555977, longitude: -97.11691204643674 },
-  { name: 'Science Hall', latitude: 32.73048850678233, longitude: -97.11365621515012 },
-  { name: 'University Center', latitude: 32.73166137076197, longitude: -97.11099924459786 },
+  { name: 'Arlington Hall', latitude: 32.730256, longitude: -97.106284 },
+  { name: 'Business Building', latitude: 32.731143, longitude: -97.111431 },
+  { name: 'Central Library', latitude: 32.729913, longitude: -97.112907 },
+  { name: 'College Park Center', latitude: 32.730652, longitude: -97.108038 },
+  { name: 'Engineering Research Building', latitude: 32.733442, longitude: -97.113229 },
+  { name: 'Fine Arts Building', latitude: 32.730504, longitude: -97.115139 },
+  { name: 'Maverick Activities Center', latitude: 32.731954, longitude: -97.116912 },
+  { name: 'Nedderman Hall', latitude: 32.732161, longitude: -97.113876 },
+  { name: 'Science Hall', latitude: 32.73047, longitude: -97.112021 },
+  { name: 'Science & Engineering Innovation & Research Building', latitude: 32.733054, longitude: -97.110284 },
+  { name: 'University Center', latitude: 32.731661, longitude: -97.110999 },
 ];
 
 const routeSeedData = [
@@ -111,16 +115,120 @@ const routeSeedData = [
     eta: '7 minutes',
     summary: 'Curated walk from Central Library to Maverick Activities Center. Estimated travel time: 7 minutes.',
     pathCoordinates: [
-      [32.7296, -97.1131],
-      [32.7293, -97.1142],
-      [32.7289, -97.1154],
-      [32.7282, -97.1167],
+      [32.729913, -97.112907],
+      [32.73035, -97.11385],
+      [32.73078, -97.11473],
+      [32.73138, -97.11572],
+      [32.73186, -97.11645],
+      [32.731954, -97.116912],
     ],
     steps: [
       'Exit the Central Library toward the west plaza.',
-      'Go straight until you get on the bridge connecting to the Fine Arts Building.',
-      'Continue past the building and take a right',
-      'The Maverick Activities Center is on your left with giant glass windows.',
+      'Follow the promenade alongside the water fountain and continue up the ramp.',
+      'Stay on the path as it curves past the Fine Arts Building.',
+      'Keep left at the green space toward the Activity Center lawn.',
+      'Enter the Maverick Activities Center near the glass façade.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Science & Engineering Innovation & Research Building',
+    eta: '6 minutes',
+    summary: 'Curated walk from Central Library to SEIR. Estimated travel time: 6 minutes.',
+    pathCoordinates: [
+      [32.729913, -97.112907],
+      [32.730302, -97.11221],
+      [32.73092, -97.11155],
+      [32.73165, -97.11105],
+      [32.73244, -97.11066],
+      [32.733054, -97.110284],
+    ],
+    steps: [
+      'Leave the library through the east entrance toward the mall.',
+      'Head north, keeping the Planetarium on your left.',
+      'Continue straight toward the bridge that crosses Cooper Street.',
+      'Cross the bridge and stay on the elevated walkway.',
+      'SEIR is the glass building ahead on your right.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Science Hall',
+    eta: '4 minutes',
+    summary: 'Curated walk from Central Library to Science Hall. Estimated travel time: 4 minutes.',
+    pathCoordinates: [
+      [32.729913, -97.112907],
+      [32.73019, -97.11246],
+      [32.73036, -97.11219],
+      [32.73047, -97.112021],
+    ],
+    steps: [
+      'Walk east across the library mall toward the Planetarium.',
+      'Follow the sidewalk as it angles slightly north.',
+      'Keep to the right of the Planetarium lawn.',
+      'Science Hall is the brick building just ahead on your left.',
+    ],
+  },
+  {
+    start: 'Science & Engineering Innovation & Research Building',
+    destination: 'Nedderman Hall',
+    eta: '5 minutes',
+    summary: 'Curated walk from SEIR to Nedderman Hall. Estimated travel time: 5 minutes.',
+    pathCoordinates: [
+      [32.733054, -97.110284],
+      [32.73302, -97.11115],
+      [32.73286, -97.11215],
+      [32.73248, -97.11302],
+      [32.732161, -97.113876],
+    ],
+    steps: [
+      'Exit SEIR toward the central courtyard.',
+      'Head west across the bridge toward the Life Science Building.',
+      'Continue straight as the sidewalk bends toward the engineering complex.',
+      'Cross the service drive and stay on the shaded path.',
+      'Nedderman Hall is the large building on your left.',
+    ],
+  },
+  {
+    start: 'Maverick Activities Center',
+    destination: 'University Center',
+    eta: '8 minutes',
+    summary: 'Curated walk from Maverick Activities Center to University Center. Estimated travel time: 8 minutes.',
+    pathCoordinates: [
+      [32.731954, -97.116912],
+      [32.73172, -97.11624],
+      [32.73137, -97.11535],
+      [32.73116, -97.11433],
+      [32.73105, -97.11341],
+      [32.73128, -97.11245],
+      [32.731661, -97.110999],
+    ],
+    steps: [
+      'Leave the MAC through the main entrance toward the pedestrian mall.',
+      'Continue east, keeping the Intramural Fields to your right.',
+      'Follow the walkway past the Science & Engineering buildings.',
+      'Stay straight as the path descends toward Cooper Street.',
+      'Cross the plaza in front of the University Center and head inside.',
+    ],
+  },
+  {
+    start: 'University Center',
+    destination: 'College Park Center',
+    eta: '7 minutes',
+    summary: 'Curated walk from University Center to College Park Center. Estimated travel time: 7 minutes.',
+    pathCoordinates: [
+      [32.731661, -97.110999],
+      [32.73145, -97.11031],
+      [32.73101, -97.10935],
+      [32.73073, -97.10866],
+      [32.730652, -97.108038],
+    ],
+    steps: [
+      'Exit the University Center facing Spaniolo Drive.',
+      'Head south toward the College Park District.',
+      'Follow the sidewalk past the West Campus Library.',
+      'Continue straight toward the arena plaza.',
+      'Enter College Park Center at the main rotunda.',
     ],
   },
   {
@@ -129,16 +237,18 @@ const routeSeedData = [
     eta: '6 minutes',
     summary: 'Curated walk from College Park Center to Science Hall. Estimated travel time: 6 minutes.',
     pathCoordinates: [
-      [32.7323, -97.1056],
-      [32.7315, -97.1078],
-      [32.7306, -97.1102],
-      [32.7297, -97.1124],
+      [32.730652, -97.108038],
+      [32.73087, -97.1092],
+      [32.731, -97.11048],
+      [32.7308, -97.11173],
+      [32.73047, -97.112021],
     ],
     steps: [
-      'Leave College Park Center and head northwest toward Spaniolo Drive.',
-      'Turn left on Spaniolo Drive and continue straight.',
-      'Cross UTA Boulevard and keep following Spaniolo Drive.',
-      'Science Hall is on the right—enter through the south entrance.',
+      'Leave College Park Center toward Spaniolo Drive.',
+      'Cross Center Street and continue west.',
+      'Follow the tree-lined sidewalk up the gentle hill.',
+      'Keep straight as you pass the University Center courtyard.',
+      'Science Hall is on the corner just ahead.',
     ],
   },
   {
@@ -147,34 +257,60 @@ const routeSeedData = [
     eta: '8 minutes',
     summary: 'Curated walk from Engineering Research Building to Fine Arts Building. Estimated travel time: 8 minutes.',
     pathCoordinates: [
-      [32.732, -97.1114],
-      [32.7316, -97.1128],
-      [32.7314, -97.1147],
-      [32.731, -97.1171],
+      [32.733442, -97.113229],
+      [32.73298, -97.11334],
+      [32.73245, -97.11375],
+      [32.73193, -97.11451],
+      [32.73127, -97.11504],
+      [32.730504, -97.115139],
     ],
     steps: [
-      'Exit the Engineering Research Building toward the courtyard.',
-      'Follow the path west along West Mitchell Street.',
-      'Continue straight past the Architecture Building.',
-      'The Fine Arts Building is ahead on the left—enter through the main lobby.',
+      'Exit ERB onto the engineering mall and head south.',
+      'Continue toward the Architecture Building courtyard.',
+      'Stay on the shaded pathway beside Woolf Hall.',
+      'Cross Mitchell Street and keep the planetarium dome in sight.',
+      'Fine Arts is the building with the large mural on your right.',
     ],
   },
   {
-    start: 'University Center',
-    destination: 'Central Library',
-    eta: '4 minutes',
-    summary: 'Curated walk from University Center to Central Library. Estimated travel time: 4 minutes.',
+    start: 'Fine Arts Building',
+    destination: 'Business Building',
+    eta: '5 minutes',
+    summary: 'Curated walk from Fine Arts Building to Business Building. Estimated travel time: 5 minutes.',
     pathCoordinates: [
-      [32.7312, -97.1109],
-      [32.7308, -97.1118],
-      [32.7302, -97.1126],
-      [32.7296, -97.1131],
+      [32.730504, -97.115139],
+      [32.73064, -97.11454],
+      [32.73087, -97.11387],
+      [32.73105, -97.11318],
+      [32.731143, -97.111431],
     ],
     steps: [
-      'Leave the University Center heading west toward Cooper Street.',
-      'Turn slightly right and follow the path toward the Central Library mall.',
-      'Continue straight until you reach the library plaza.',
-      'Enter the Central Library through the front doors.',
+      'Leave the Fine Arts patio heading east toward the library mall.',
+      'Stay on the sidewalk that parallels the Planetarium lawn.',
+      'Continue past the Central Library entrance.',
+      'Follow the path as it curves toward the College of Business.',
+      'The Business Building entrance faces the fountain courtyard.',
+    ],
+  },
+  {
+    start: 'Arlington Hall',
+    destination: 'Central Library',
+    eta: '9 minutes',
+    summary: 'Curated walk from Arlington Hall to Central Library. Estimated travel time: 9 minutes.',
+    pathCoordinates: [
+      [32.730256, -97.106284],
+      [32.73037, -97.10738],
+      [32.73046, -97.10864],
+      [32.7305, -97.10992],
+      [32.73032, -97.11102],
+      [32.729913, -97.112907],
+    ],
+    steps: [
+      'Start at Arlington Hall and walk west toward Spaniolo Drive.',
+      'Cross the light at Spaniolo and continue straight toward campus.',
+      'Follow the sidewalk past the College Park district.',
+      'Continue along the tree-lined mall toward the library fountain.',
+      'Enter the Central Library at the main plaza.',
     ],
   },
 ];
@@ -194,25 +330,17 @@ const seedUsers = () => {
 };
 
 const seedLocations = () => {
-  const existingLocations = querySingle('SELECT COUNT(1) AS count FROM locations');
-  if (existingLocations && existingLocations.count > 0) {
-    return;
-  }
-
   campusLocationSeedData.forEach((location) => {
     execute(
-      'INSERT INTO locations (name, latitude, longitude) VALUES (?, ?, ?)',
+      `INSERT INTO locations (name, latitude, longitude)
+       VALUES (?, ?, ?)
+       ON CONFLICT(name) DO UPDATE SET latitude = excluded.latitude, longitude = excluded.longitude`,
       [location.name, location.latitude, location.longitude]
     );
   });
 };
 
 const seedRoutes = () => {
-  const existingRoutes = querySingle('SELECT COUNT(1) AS count FROM routes');
-  if (existingRoutes && existingRoutes.count > 0) {
-    return;
-  }
-
   routeSeedData.forEach((route) => {
     const startLocation = getLocationByName(route.start);
     const destinationLocation = getLocationByName(route.destination);
@@ -221,26 +349,62 @@ const seedRoutes = () => {
       return;
     }
 
-    const insertedRoute = querySingle(
-      'INSERT INTO routes (start_location_id, end_location_id, eta, summary) VALUES (?, ?, ?, ?) RETURNING id',
-      [startLocation.id, destinationLocation.id, route.eta, route.summary]
+    const existingRoute = querySingle(
+      'SELECT id FROM routes WHERE start_location_id = ? AND end_location_id = ?',
+      [startLocation.id, destinationLocation.id]
     );
 
-    const insertedRouteId = insertedRoute.id;
+    let routeId = null;
 
-    route.pathCoordinates.forEach(([latitude, longitude], index) => {
+    if (existingRoute) {
+      routeId = existingRoute.id;
+      execute('UPDATE routes SET eta = ?, summary = ? WHERE id = ?', [route.eta, route.summary, routeId]);
+    } else {
+      const insertedRoute = querySingle(
+        'INSERT INTO routes (start_location_id, end_location_id, eta, summary) VALUES (?, ?, ?, ?) RETURNING id',
+        [startLocation.id, destinationLocation.id, route.eta, route.summary]
+      );
+      routeId = insertedRoute.id;
+    }
+
+    if (!routeId) {
+      return;
+    }
+
+    const coordinateCount = (route.pathCoordinates || []).length;
+    const stepCount = (route.steps || []).length;
+
+    (route.pathCoordinates || []).forEach(([latitude, longitude], index) => {
       execute(
-        'INSERT INTO route_coordinates (route_id, point_index, latitude, longitude) VALUES (?, ?, ?, ?)',
-        [insertedRouteId, index, latitude, longitude]
+        `INSERT INTO route_coordinates (route_id, point_index, latitude, longitude)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(route_id, point_index)
+         DO UPDATE SET latitude = excluded.latitude, longitude = excluded.longitude`,
+        [routeId, index, latitude, longitude]
       );
     });
 
-    route.steps.forEach((instruction, index) => {
+    if (coordinateCount === 0) {
+      execute('DELETE FROM route_coordinates WHERE route_id = ?', [routeId]);
+    } else {
+      execute('DELETE FROM route_coordinates WHERE route_id = ? AND point_index >= ?', [routeId, coordinateCount]);
+    }
+
+    (route.steps || []).forEach((instruction, index) => {
       execute(
-        'INSERT INTO route_steps (route_id, step_number, instruction) VALUES (?, ?, ?)',
-        [insertedRouteId, index + 1, instruction]
+        `INSERT INTO route_steps (route_id, step_number, instruction)
+         VALUES (?, ?, ?)
+         ON CONFLICT(route_id, step_number)
+         DO UPDATE SET instruction = excluded.instruction`,
+        [routeId, index + 1, instruction]
       );
     });
+
+    if (stepCount === 0) {
+      execute('DELETE FROM route_steps WHERE route_id = ?', [routeId]);
+    } else {
+      execute('DELETE FROM route_steps WHERE route_id = ? AND step_number > ?', [routeId, stepCount]);
+    }
   });
 };
 
@@ -342,6 +506,15 @@ const initializeDatabase = () => {
       instruction TEXT NOT NULL,
       FOREIGN KEY(route_id) REFERENCES routes(id) ON DELETE CASCADE
     );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_routes_start_end
+      ON routes (start_location_id, end_location_id);
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_route_coordinates_point
+      ON route_coordinates (route_id, point_index);
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_route_steps_number
+      ON route_steps (route_id, step_number);
 
     CREATE TABLE IF NOT EXISTS walk_requests (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

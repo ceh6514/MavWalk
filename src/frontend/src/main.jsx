@@ -8,7 +8,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import mavWalkLogo from './MavWalkLogo.png';
 import utaLogo from './142-1425701_university-of-texas-uta-logo-university-of-texas-at-arlington-logo.png';
-import { getMessages as apiGetMessages, getRandomMessage, postMessage as apiPostMessage } from './api';
+import { getRoutes as apiGetRoutes, getRandomMessage, postMessage as apiPostMessage } from './api';
 
 
 
@@ -23,95 +23,16 @@ const defaultMarkerIcon = L.icon({
 
 L.Marker.prototype.options.icon = defaultMarkerIcon;
 
-const campusLocations = [
-  'Central Library',
-  'College Park Center',
-  'Engineering Research Building',
-  'Fine Arts Building',
-  'Maverick Activities Center',
-  'Science Hall',
-  'University Center',
-];
-
-// 🔸 Removed the old kindnessMessages array
-
-const sampleRoutes = {
-  'Central Library|Maverick Activities Center': {
-    startCoordinates: [32.7296, -97.1131],
-    destinationCoordinates: [32.7282, -97.1167],
-    pathCoordinates: [
-      [32.7296, -97.1131],
-      [32.7293, -97.1142],
-      [32.7289, -97.1154],
-      [32.7282, -97.1167],
-    ],
-    eta: '7 minutes',
-    steps: [
-      'Exit the Central Library toward the west plaza.',
-      'Go straight until you get on the bridge connecting to the Fine Arts Building.',
-      'Continue past the building and take a right',
-      'The Maverick Activities Center is on your left with giant glass windows.',
-    ],
-  },
-  'College Park Center|Science Hall': {
-    startCoordinates: [32.7323, -97.1056],
-    destinationCoordinates: [32.7297, -97.1124],
-    pathCoordinates: [
-      [32.7323, -97.1056],
-      [32.7315, -97.1078],
-      [32.7306, -97.1102],
-      [32.7297, -97.1124],
-    ],
-    eta: '6 minutes',
-    steps: [
-      'Leave College Park Center and head northwest toward Spaniolo Drive.',
-      'Turn left on Spaniolo Drive and continue straight.',
-      'Cross UTA Boulevard and keep following Spaniolo Drive.',
-      'Science Hall is on the right—enter through the south entrance.',
-    ],
-  },
-  'Engineering Research Building|Fine Arts Building': {
-    startCoordinates: [32.732, -97.1114],
-    destinationCoordinates: [32.731, -97.1171],
-    pathCoordinates: [
-      [32.732, -97.1114],
-      [32.7316, -97.1128],
-      [32.7314, -97.1147],
-      [32.731, -97.1171],
-    ],
-    eta: '8 minutes',
-    steps: [
-      'Exit the Engineering Research Building toward the courtyard.',
-      'Follow the path west along West Mitchell Street.',
-      'Continue straight past the Architecture Building.',
-      'The Fine Arts Building is ahead on the left—enter through the main lobby.',
-    ],
-  },
-  'University Center|Central Library': {
-    startCoordinates: [32.7312, -97.1109],
-    destinationCoordinates: [32.7296, -97.1131],
-    pathCoordinates: [
-      [32.7312, -97.1109],
-      [32.7308, -97.1118],
-      [32.7302, -97.1126],
-      [32.7296, -97.1131],
-    ],
-    eta: '4 minutes',
-    steps: [
-      'Leave the University Center heading west toward Cooper Street.',
-      'Turn slightly right and follow the path toward the Central Library mall.',
-      'Continue straight until you reach the library plaza.',
-      'Enter the Central Library through the front doors.',
-    ],
-  },
-};
-
 const defaultCenter = [32.7318, -97.1133];
 
 const App = () => {
   const [startLocation, setStartLocation] = useState('');
   const [destination, setDestination] = useState('');
   const [stage, setStage] = useState('home');
+  const [routesCatalogue, setRoutesCatalogue] = useState([]);
+  const [routesIndex, setRoutesIndex] = useState({});
+  const [routesLoading, setRoutesLoading] = useState(true);
+  const [routesError, setRoutesError] = useState(null);
   const [routeResult, setRouteResult] = useState(null);
   const [formFeedback, setFormFeedback] = useState(null);
   const [userMessage, setUserMessage] = useState('');
@@ -128,6 +49,84 @@ const App = () => {
   const [encouragement, setEncouragement] = useState(null);
   const [msgLoading, setMsgLoading] = useState(false);
   const [msgError, setMsgError] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    setRoutesLoading(true);
+    setRoutesError(null);
+
+    (async () => {
+      try {
+        const routes = await apiGetRoutes();
+        if (!alive) {
+          return;
+        }
+
+        const index = {};
+        routes.forEach((route) => {
+          if (route?.startLocation && route?.destination) {
+            index[`${route.startLocation}|${route.destination}`] = route;
+          }
+        });
+
+        setRoutesCatalogue(routes);
+        setRoutesIndex(index);
+      } catch (error) {
+        if (alive) {
+          setRoutesError(error.message || 'Failed to load curated routes.');
+        }
+      } finally {
+        if (alive) {
+          setRoutesLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const startOptions = useMemo(() => {
+    const names = new Set();
+    routesCatalogue.forEach((route) => {
+      if (route?.startLocation) {
+        names.add(route.startLocation);
+      }
+    });
+    return Array.from(names).sort();
+  }, [routesCatalogue]);
+
+  const destinationOptions = useMemo(() => {
+    const names = new Set();
+    if (startLocation) {
+      routesCatalogue.forEach((route) => {
+        if (route?.startLocation === startLocation && route?.destination) {
+          names.add(route.destination);
+        }
+      });
+    } else {
+      routesCatalogue.forEach((route) => {
+        if (route?.destination) {
+          names.add(route.destination);
+        }
+      });
+    }
+
+    return Array.from(names).sort();
+  }, [routesCatalogue, startLocation]);
+
+  useEffect(() => {
+    if (!destination) {
+      return;
+    }
+
+    if (!destinationOptions.includes(destination)) {
+      setDestination('');
+    }
+  }, [destination, destinationOptions]);
+
+  const popularDestinations = useMemo(() => destinationOptions.slice(0, 4), [destinationOptions]);
 
   // Geolocation watcher lifecycle
   useEffect(() => {
@@ -181,29 +180,28 @@ const App = () => {
     };
   }, [stage]);
 
-  // 🔸 Fetch one encouragement when entering the message stage
   // Fetch one encouragement when entering the message stage (server-side random)
-useEffect(() => {
-  if (stage !== 'message') return;
+  useEffect(() => {
+    if (stage !== 'message') return;
 
-  let alive = true;
-  setMsgLoading(true);
-  setMsgError(null);
-  setEncouragement(null);
+    let alive = true;
+    setMsgLoading(true);
+    setMsgError(null);
+    setEncouragement(null);
 
-  (async () => {
-    try {
-      const row = await getRandomMessage({ start: startLocation, destination });
-      if (alive) setEncouragement(row?.message ?? null);
-    } catch (e) {
-      if (alive) setMsgError(e.message || 'Failed to load messages');
-    } finally {
-      if (alive) setMsgLoading(false);
-    }
-  })();
+    (async () => {
+      try {
+        const row = await getRandomMessage({ start: startLocation, destination });
+        if (alive) setEncouragement(row?.message ?? null);
+      } catch (e) {
+        if (alive) setMsgError(e.message || 'Failed to load messages');
+      } finally {
+        if (alive) setMsgLoading(false);
+      }
+    })();
 
-  return () => { alive = false; };
-}, [stage, startLocation, destination]);
+    return () => { alive = false; };
+  }, [stage, startLocation, destination]);
 
 
   const mapCenter = useMemo(() => {
@@ -235,6 +233,22 @@ useEffect(() => {
     setFormFeedback(null);
     setSubmissionStatus(null);
 
+    if (routesLoading) {
+      setFormFeedback({
+        type: 'info',
+        message: 'Hang tight—we are still loading curated Maverick routes.',
+      });
+      return;
+    }
+
+    if (routesError) {
+      setFormFeedback({
+        type: 'error',
+        message: `We could not load campus routes. ${routesError} Please refresh and try again.`,
+      });
+      return;
+    }
+
     if (!startLocation || !destination) {
       setFormFeedback({ type: 'error', message: 'Please select both a starting point and a destination.' });
       return;
@@ -246,7 +260,7 @@ useEffect(() => {
     }
 
     const routeKey = `${startLocation}|${destination}`;
-    const routeDetails = sampleRoutes[routeKey];
+    const routeDetails = routesIndex[routeKey];
 
     if (!routeDetails) {
       setFormFeedback({
@@ -258,9 +272,13 @@ useEffect(() => {
 
     setRouteResult({
       ...routeDetails,
-      startLocation,
-      destination,
-      summary: `Curated walk from ${startLocation} to ${destination}.\n Estimated travel time: ${routeDetails.eta}.`,
+      startLocation: routeDetails.startLocation ?? startLocation,
+      destination: routeDetails.destination ?? destination,
+      summary:
+        routeDetails.summary ??
+        `Curated walk from ${startLocation} to ${destination}.${
+          routeDetails.eta ? ` Estimated travel time: ${routeDetails.eta}.` : ''
+        }`,
     });
 
     setStage('message'); // the effect above will fetch the encouragement
@@ -411,6 +429,18 @@ useEffect(() => {
                     Get directions with encouraging messages along the way
                   </p>
 
+                  {routesLoading && (
+                    <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-base text-blue-700">
+                      Loading curated Maverick routes...
+                    </div>
+                  )}
+
+                  {routesError && (
+                    <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-base text-red-700">
+                      We hit a snag while loading campus routes. {routesError}
+                    </div>
+                  )}
+
                   <form className="space-y-5" onSubmit={handleFindRoute}>
                     {/* Starting From */}
                     <div className="space-y-2">
@@ -422,10 +452,13 @@ useEffect(() => {
                         id="startLocation"
                         value={startLocation}
                         onChange={(event) => setStartLocation(event.target.value)}
+                        disabled={routesLoading && startOptions.length === 0}
                         className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-4 text-base text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
                       >
-                        <option value="">Enter starting location...</option>
-                        {campusLocations.map((location) => (
+                        <option value="">
+                          {routesLoading ? 'Loading curated routes…' : 'Enter starting location...'}
+                        </option>
+                        {startOptions.map((location) => (
                           <option key={`start-${location}`} value={location}>
                             {location}
                           </option>
@@ -437,7 +470,12 @@ useEffect(() => {
                     <div className="flex justify-center">
                       <button
                         type="button"
-                        className="w-12 h-12 bg-blue-100 hover:bg-blue-200 rounded-full flex items-center justify-center text-blue-600 transition-colors"
+                        disabled={routesLoading || (!startLocation && !destination)}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                          routesLoading || (!startLocation && !destination)
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
+                        }`}
                         onClick={() => {
                           const temp = startLocation;
                           setStartLocation(destination);
@@ -460,10 +498,17 @@ useEffect(() => {
                         id="destination"
                         value={destination}
                         onChange={(event) => setDestination(event.target.value)}
+                        disabled={routesLoading && destinationOptions.length === 0}
                         className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-4 text-base text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
                       >
-                        <option value="">Where are you going?</option>
-                        {campusLocations.map((location) => (
+                        <option value="">
+                          {routesLoading
+                            ? 'Loading destinations…'
+                            : startLocation
+                            ? 'Choose a destination for this start point...'
+                            : 'Where are you going?'}
+                        </option>
+                        {destinationOptions.map((location) => (
                           <option key={`destination-${location}`} value={location}>
                             {location}
                           </option>
@@ -474,7 +519,12 @@ useEffect(() => {
                     {/* Start Button */}
                     <button
                       type="submit"
-                      className="w-full rounded-xl bg-gradient-to-r from-purple-500 to-orange-500 px-6 py-4 text-white text-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                      disabled={routesLoading || !!routesError}
+                      className={`w-full rounded-xl bg-gradient-to-r from-purple-500 to-orange-500 px-6 py-4 text-white text-lg font-bold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 ${
+                        routesLoading || routesError
+                          ? 'opacity-60 cursor-not-allowed'
+                          : 'hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
+                      }`}
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -501,11 +551,29 @@ useEffect(() => {
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-base font-bold text-gray-800 mb-3">Popular Destinations</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {campusLocations.slice(0, 4).map((location) => (
+                  {popularDestinations.length === 0 && (
+                    <div className="col-span-2 text-sm text-gray-500">
+                      {routesLoading ? 'Loading favorites...' : 'Select a start point to see featured walks.'}
+                    </div>
+                  )}
+                  {popularDestinations.map((location) => (
                     <button
                       key={`popular-${location}`}
-                      onClick={() => setDestination(location)}
-                      className="text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-700 border border-gray-200 hover:border-gray-300 transition-all"
+                      onClick={() => {
+                        const matchingRoute = routesCatalogue.find((route) => route.destination === location);
+                        if (matchingRoute) {
+                          setStartLocation(matchingRoute.startLocation);
+                          setDestination(matchingRoute.destination);
+                        } else {
+                          setDestination(location);
+                        }
+                      }}
+                      disabled={routesLoading}
+                      className={`text-left px-4 py-3 rounded-lg text-sm border transition-all ${
+                        routesLoading
+                          ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                          : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200 hover:border-gray-300'
+                      }`}
                     >
                       {location}
                     </button>
