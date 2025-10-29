@@ -359,8 +359,6 @@ const seedRoutes = () => {
     if (existingRoute) {
       routeId = existingRoute.id;
       execute('UPDATE routes SET eta = ?, summary = ? WHERE id = ?', [route.eta, route.summary, routeId]);
-      execute('DELETE FROM route_coordinates WHERE route_id = ?', [routeId]);
-      execute('DELETE FROM route_steps WHERE route_id = ?', [routeId]);
     } else {
       const insertedRoute = querySingle(
         'INSERT INTO routes (start_location_id, end_location_id, eta, summary) VALUES (?, ?, ?, ?) RETURNING id',
@@ -373,19 +371,40 @@ const seedRoutes = () => {
       return;
     }
 
+    const coordinateCount = (route.pathCoordinates || []).length;
+    const stepCount = (route.steps || []).length;
+
     (route.pathCoordinates || []).forEach(([latitude, longitude], index) => {
       execute(
-        'INSERT INTO route_coordinates (route_id, point_index, latitude, longitude) VALUES (?, ?, ?, ?)',
+        `INSERT INTO route_coordinates (route_id, point_index, latitude, longitude)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(route_id, point_index)
+         DO UPDATE SET latitude = excluded.latitude, longitude = excluded.longitude`,
         [routeId, index, latitude, longitude]
       );
     });
 
+    if (coordinateCount === 0) {
+      execute('DELETE FROM route_coordinates WHERE route_id = ?', [routeId]);
+    } else {
+      execute('DELETE FROM route_coordinates WHERE route_id = ? AND point_index >= ?', [routeId, coordinateCount]);
+    }
+
     (route.steps || []).forEach((instruction, index) => {
       execute(
-        'INSERT INTO route_steps (route_id, step_number, instruction) VALUES (?, ?, ?)',
+        `INSERT INTO route_steps (route_id, step_number, instruction)
+         VALUES (?, ?, ?)
+         ON CONFLICT(route_id, step_number)
+         DO UPDATE SET instruction = excluded.instruction`,
         [routeId, index + 1, instruction]
       );
     });
+
+    if (stepCount === 0) {
+      execute('DELETE FROM route_steps WHERE route_id = ?', [routeId]);
+    } else {
+      execute('DELETE FROM route_steps WHERE route_id = ? AND step_number > ?', [routeId, stepCount]);
+    }
   });
 };
 
