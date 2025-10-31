@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 
 const {
+    ValidationError,
     initializeDatabase,
     findUserByCredentials,
     getAllLocations,
@@ -22,6 +23,68 @@ const {
 const app = express();
 const port = 3001;
 
+const getRequiredString = (value, fieldName) => {
+    if (typeof value !== 'string') {
+        throw new ValidationError(`${fieldName} is required.`);
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+        throw new ValidationError(`${fieldName} is required.`);
+    }
+
+    return trimmed;
+};
+
+const parsePositiveInteger = (value, fieldName) => {
+    if (value === null || value === undefined) {
+        throw new ValidationError(`${fieldName} is required.`);
+    }
+
+    let numericValue;
+
+    if (typeof value === 'number') {
+        numericValue = value;
+    } else if (typeof value === 'string') {
+        if (!value.trim()) {
+            throw new ValidationError(`${fieldName} is required.`);
+        }
+
+        numericValue = Number(value);
+    } else {
+        throw new ValidationError(`${fieldName} must be a positive integer.`);
+    }
+
+    if (!Number.isInteger(numericValue) || numericValue < 1) {
+        throw new ValidationError(`${fieldName} must be a positive integer.`);
+    }
+
+    return numericValue;
+};
+
+const getOptionalString = (value) => {
+    if (typeof value !== 'string') {
+        return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed || undefined;
+};
+
+const handleError = (res, error, { logMessage, responseMessage, status = 500 }) => {
+    if (error instanceof ValidationError) {
+        return res.status(400).json({ message: error.message });
+    }
+
+    if (logMessage) {
+        console.error(logMessage, error);
+    } else {
+        console.error(error);
+    }
+
+    return res.status(status).json({ message: responseMessage });
+};
+
 initializeDatabase();
 
 app.use(cors());
@@ -34,8 +97,9 @@ app.get('/', (req, res) => res.send('MavWalk Backend Server is running!')); //SU
 
 //User login
 app.post('/api/login', (req, res) => {
-    const { email, password } = req.body;
     try {
+        const email = getRequiredString(req.body?.email, 'email');
+        const password = getRequiredString(req.body?.password, 'password');
         const user = findUserByCredentials(email, password);
 
         if (!user) {
@@ -44,8 +108,10 @@ app.post('/api/login', (req, res) => {
 
         res.json({ message: 'Login successful!', user });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: 'Unable to process login request.' });
+        return handleError(res, error, {
+            logMessage: 'Login error:',
+            responseMessage: 'Unable to process login request.',
+        });
     }
 });
 
@@ -55,8 +121,10 @@ app.get('/api/walks', (req, res) => {
         const pendingWalks = getPendingWalkRequests();
         res.json(pendingWalks);
     } catch (error) {
-        console.error('Failed to load pending walks:', error);
-        res.status(500).json({ message: 'Unable to load walk requests.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to load pending walks:',
+            responseMessage: 'Unable to load walk requests.',
+        });
     }
 });
 
@@ -69,16 +137,20 @@ app.get('/api/locations', (req, res) => {
         }));
         res.json(locations);
     } catch (error) {
-        console.error('Failed to load locations:', error);
-        res.status(500).json({ message: 'Unable to load locations.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to load locations:',
+            responseMessage: 'Unable to load locations.',
+        });
     }
 });
 
 //Creating a walk, place holder route used
 app.post('/api/walks', (req, res) => {
-    const { userId, startLocation, destination } = req.body;
-
     try {
+        const userId = parsePositiveInteger(req.body?.userId, 'userId');
+        const startLocation = getRequiredString(req.body?.startLocation, 'startLocation');
+        const destination = getRequiredString(req.body?.destination, 'destination');
+
         const newWalkRequest = createWalkRequest({
             userId,
             startLocationName: startLocation,
@@ -87,16 +159,18 @@ app.post('/api/walks', (req, res) => {
 
         res.status(201).json(newWalkRequest);
     } catch (error) {
-        console.error('Failed to create walk request:', error);
-        res.status(400).json({ message: error.message || 'Unable to create walk request.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to create walk request:',
+            responseMessage: 'Unable to create walk request.',
+        });
     }
 });
 
 //Joining a walk
 app.post('/api/walks/:id/join', (req, res) => {
-    const walkId = parseInt(req.params.id);
-    const { buddyId } = req.body;
     try {
+        const walkId = parsePositiveInteger(req.params.id, 'walk id');
+        const buddyId = parsePositiveInteger(req.body?.buddyId, 'buddyId');
         const walkRequest = getWalkRequestById(walkId);
 
         if (!walkRequest) {
@@ -110,8 +184,10 @@ app.post('/api/walks/:id/join', (req, res) => {
         const updatedWalk = joinWalkRequest(walkId, buddyId);
         res.json({ message: 'Successfully joined the walk!', walk: updatedWalk });
     } catch (error) {
-        console.error('Failed to join walk:', error);
-        res.status(500).json({ message: 'Unable to join walk request.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to join walk:',
+            responseMessage: 'Unable to join walk request.',
+        });
     }
 });
 
@@ -123,8 +199,8 @@ app.post('/api/walks/:id/join', (req, res) => {
  * @description Retrieves all details for a specific walk, including location.
  */
 app.get('/api/walks/:id', (req, res) => {
-    const walkId = parseInt(req.params.id);
     try {
+        const walkId = parsePositiveInteger(req.params.id, 'walk id');
         const walk = getWalkRequestById(walkId);
 
         if (!walk) {
@@ -145,8 +221,10 @@ app.get('/api/walks/:id', (req, res) => {
 
         res.json(walk);
     } catch (error) {
-        console.error('Failed to load walk details:', error);
-        res.status(500).json({ message: 'Unable to load walk details.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to load walk details:',
+            responseMessage: 'Unable to load walk details.',
+        });
     }
 });
 
@@ -155,17 +233,25 @@ app.get('/api/walks/:id', (req, res) => {
  * @description Logs an emergency event for an active walk.
  */
 app.post('/api/walks/:id/sos', (req, res) => {
-    const walkId = parseInt(req.params.id);
-    const walk = getWalkRequestById(walkId);
-    if(walk){
-        console.log(`\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
-        console.log(`!!! S.O.S. ACTIVATED FOR WALK #${walkId} !!!`);
-        console.log(`!!! User: ${walk.userId}, Buddy: ${walk.buddyId}`);
-        console.log(`!!! Last known location: ${walk.route.buddyCurrentCoords}`);
-        console.log(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n`);
-        res.status(200).json({ message: 'S.O.S. signal received. Campus police have been notified!' });
-    } else {
-        res.status(404).json({ message: 'Walk not found.' });
+    try {
+        const walkId = parsePositiveInteger(req.params.id, 'walk id');
+        const walk = getWalkRequestById(walkId);
+
+        if (walk) {
+            console.log(`\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+            console.log(`!!! S.O.S. ACTIVATED FOR WALK #${walkId} !!!`);
+            console.log(`!!! User: ${walk.userId}, Buddy: ${walk.buddyId}`);
+            console.log(`!!! Last known location: ${walk.route.buddyCurrentCoords}`);
+            console.log(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n`);
+            res.status(200).json({ message: 'S.O.S. signal received. Campus police have been notified!' });
+        } else {
+            res.status(404).json({ message: 'Walk not found.' });
+        }
+    } catch (error) {
+        return handleError(res, error, {
+            logMessage: 'Failed to trigger S.O.S.:',
+            responseMessage: 'Unable to send S.O.S. for walk.',
+        });
     }
 });
 
@@ -174,8 +260,8 @@ app.post('/api/walks/:id/sos', (req, res) => {
  * @description Marks a walk as completed.
  */
 app.post('/api/walks/:id/complete', (req, res) => {
-    const walkId = parseInt(req.params.id);
     try {
+        const walkId = parsePositiveInteger(req.params.id, 'walk id');
         const walk = getWalkRequestById(walkId);
         if (!walk) {
             return res.status(404).json({ message: 'Walk not found.' });
@@ -184,14 +270,17 @@ app.post('/api/walks/:id/complete', (req, res) => {
         const completedWalk = completeWalkRequest(walkId);
         res.status(200).json({ message: 'Walk marked as complete. Thank you!', walk: completedWalk });
     } catch (error) {
-        console.error('Failed to complete walk:', error);
-        res.status(500).json({ message: 'Unable to complete walk.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to complete walk:',
+            responseMessage: 'Unable to complete walk.',
+        });
     }
 });
 
 // Route catalogue endpoints
 app.get('/api/routes', (req, res) => {
-    const { start, destination } = req.query;
+    const start = getOptionalString(req.query.start);
+    const destination = getOptionalString(req.query.destination);
 
     try {
         if (start && destination) {
@@ -207,8 +296,10 @@ app.get('/api/routes', (req, res) => {
         const routes = getAllRoutes();
         res.json(routes);
     } catch (error) {
-        console.error('Failed to load routes:', error);
-        res.status(500).json({ message: 'Unable to load route information.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to load routes:',
+            responseMessage: 'Unable to load route information.',
+        });
     }
 });
 
@@ -218,15 +309,19 @@ app.get('/api/messages', (req, res) => {
         const messages = getMessages();
         res.json(messages);
     } catch (error) {
-        console.error('Failed to load messages:', error);
-        res.status(500).json({ message: 'Unable to load saved messages.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to load messages:',
+            responseMessage: 'Unable to load saved messages.',
+        });
     }
 });
 
 app.post('/api/messages', (req, res) => {
-    const { message, startLocation, destination } = req.body;
-
     try {
+        const message = getRequiredString(req.body?.message, 'message');
+        const startLocation = getOptionalString(req.body?.startLocation);
+        const destination = getOptionalString(req.body?.destination);
+
         const savedMessage = saveMessage({
             message,
             startLocationName: startLocation,
@@ -235,30 +330,36 @@ app.post('/api/messages', (req, res) => {
 
         res.status(201).json(savedMessage);
     } catch (error) {
-        console.error('Failed to save message:', error);
-        res.status(400).json({ message: error.message || 'Unable to save message.' });
+        return handleError(res, error, {
+            logMessage: 'Failed to save message:',
+            responseMessage: 'Unable to save message.',
+        });
     }
 });
 
 // Return ONE random message, optionally filtered by start/destination (names)
 app.get('/api/messages/random', (req, res) => {
     try {
-      const { start, destination } = req.query;
-      const all = getMessages(); // same source as /api/messages
-  
-      // getMessages() returns objects with { message, startLocation, destination } already joined
-      const filtered = all.filter(m =>
-        (start ? m.startLocation === start : true) &&
-        (destination ? m.destination === destination : true)
+      const start = getOptionalString(req.query.start);
+      const destination = getOptionalString(req.query.destination);
+      const all = getMessages();
+
+      const filtered = all.filter((message) =>
+        (start ? message.startLocation === start : true) &&
+        (destination ? message.destination === destination : true)
       );
-  
-      if (filtered.length === 0) return res.json(null);
-  
+
+      if (filtered.length === 0) {
+        return res.json(null);
+      }
+
       const pick = filtered[Math.floor(Math.random() * filtered.length)];
       return res.json(pick);
     } catch (error) {
-      console.error('Failed to get random message:', error);
-      res.status(500).json({ message: 'Unable to load a random message.' });
+      return handleError(res, error, {
+        logMessage: 'Failed to get random message:',
+        responseMessage: 'Unable to load a random message.',
+      });
     }
   });
   

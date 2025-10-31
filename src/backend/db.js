@@ -2,6 +2,13 @@ const path = require('path');
 const fs = require('fs');
 const { spawnSync } = require('child_process');
 
+class ValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
 const dataDirectory = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDirectory)) {
   fs.mkdirSync(dataDirectory, { recursive: true });
@@ -762,14 +769,14 @@ const getWalkRequestById = (walkId) => {
 
 const createWalkRequest = ({ userId, startLocationName, destinationLocationName }) => {
   if (!userId || !startLocationName || !destinationLocationName) {
-    throw new Error('userId, startLocation, and destination are required.');
+    throw new ValidationError('userId, startLocation, and destination are required.');
   }
 
   const startLocation = getLocationByName(startLocationName);
   const destinationLocation = getLocationByName(destinationLocationName);
 
   if (!startLocation || !destinationLocation) {
-    throw new Error('Unable to find start or destination location.');
+    throw new ValidationError('Unable to find start or destination location.');
   }
 
   const route = getRouteBetweenLocations(startLocationName, destinationLocationName);
@@ -824,7 +831,7 @@ const getAllLocations = () => {
 
 const saveMessage = ({ message, startLocationName, destinationLocationName }) => {
   if (!message || !message.trim()) {
-    throw new Error('Message content is required.');
+    throw new ValidationError('Message content is required.');
   }
 
   const startLocation = getLocationByName(startLocationName);
@@ -875,6 +882,7 @@ const getMessages = () => {
 };
 
 module.exports = {
+  ValidationError,
   initializeDatabase,
   findUserByCredentials,
   getAllLocations,
