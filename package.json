@@ -1,0 +1,21 @@
+{
+  "name": "mavwalk",
+  "version": "1.0.0",
+  "description": "MavWalk is a website curated for University of Texas at Arlington students to enjoy uplifting messages while navigating the massive campus. The project pairs a Node.js/Express backend with a Vite + React frontend.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
