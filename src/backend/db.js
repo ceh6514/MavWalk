@@ -2,6 +2,13 @@ const path = require('path');
 const fs = require('fs');
 const { spawnSync } = require('child_process');
 
+class ValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
 const dataDirectory = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDirectory)) {
   fs.mkdirSync(dataDirectory, { recursive: true });
@@ -30,17 +37,45 @@ const escapeValue = (value) => {
 };
 
 const formatSql = (sql, params) => {
-  let formattedSql = sql;
-  params.forEach((param) => {
-    const placeholderIndex = formattedSql.indexOf('?');
-    if (placeholderIndex === -1) {
-      throw new Error('Too many parameters supplied for SQL statement.');
-    }
-    formattedSql = `${formattedSql.slice(0, placeholderIndex)}${escapeValue(param)}${formattedSql.slice(placeholderIndex + 1)}`;
-  });
+  let formattedSql = '';
+  let paramIndex = 0;
+  let inSingleQuote = false;
 
-  if (formattedSql.includes('?')) {
-    throw new Error('Not enough parameters supplied for SQL statement.');
+  for (let i = 0; i < sql.length; i += 1) {
+    const char = sql[i];
+
+    if (char === "'") {
+      formattedSql += char;
+
+      if (inSingleQuote) {
+        if (i + 1 < sql.length && sql[i + 1] === "'") {
+          formattedSql += "'";
+          i += 1;
+        } else {
+          inSingleQuote = false;
+        }
+      } else {
+        inSingleQuote = true;
+      }
+
+      continue;
+    }
+
+    if (char === '?' && !inSingleQuote) {
+      if (paramIndex >= params.length) {
+        throw new Error('Not enough parameters supplied for SQL statement.');
+      }
+
+      formattedSql += escapeValue(params[paramIndex]);
+      paramIndex += 1;
+      continue;
+    }
+
+    formattedSql += char;
+  }
+
+  if (paramIndex < params.length) {
+    throw new Error('Too many parameters supplied for SQL statement.');
   }
 
   return formattedSql;
@@ -315,6 +350,109 @@ const routeSeedData = [
   },
 ];
 
+const routeMessageSeedData = [
+  {
+    start: 'Central Library',
+    destination: 'Maverick Activities Center',
+    messages: [
+      'Need a buddy from Central Library to the MAC—anyone up for a quick workout?',
+      'Heading to the MAC from the library. Could use some company along the way!',
+      'Library study session is done—walking to the MAC if anyone wants to join.',
+      'Looking for a safe walk from Central Library to the MAC. Meet me by the fountain?',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Science & Engineering Innovation & Research Building',
+    messages: [
+      'Walking to SEIR from the library for lab—walk with me?',
+      'Need a partner from Central Library to SEIR. Leaving in five minutes!',
+      'Anyone heading toward SEIR from the library? Let’s walk together.',
+      'Looking for a study buddy en route from Central Library to SEIR.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Science Hall',
+    messages: [
+      'Quick walk from Central Library to Science Hall—join me?',
+      'Heading to Science Hall from the library before class. Company appreciated!',
+      'Leaving the library for Science Hall. Walk buddy wanted!',
+      'Need a safe walk from Central Library to Science Hall. Meet near the front steps.',
+    ],
+  },
+  {
+    start: 'Science & Engineering Innovation & Research Building',
+    destination: 'Nedderman Hall',
+    messages: [
+      'Walking from SEIR to Nedderman for a group meeting—come along?',
+      'Headed to Nedderman from SEIR. Would love a walking buddy!',
+      'Anyone else going from SEIR to Nedderman Hall? Let’s link up.',
+      'Need a partner for the short walk from SEIR over to Nedderman.',
+    ],
+  },
+  {
+    start: 'Maverick Activities Center',
+    destination: 'University Center',
+    messages: [
+      'Leaving the MAC for the UC—walk with me?',
+      'Looking for company from MAC to UC after my workout.',
+      'Heading toward University Center from MAC. Anyone else going that way?',
+      'MAC to UC stroll—seeking a buddy for the evening walk.',
+    ],
+  },
+  {
+    start: 'University Center',
+    destination: 'College Park Center',
+    messages: [
+      'Walking from UC to College Park Center for the game—join up!',
+      'Anyone heading to College Park Center from UC? Let’s walk together.',
+      'UC to CPC in a few—looking for a walking partner.',
+      'Need a safe walk from University Center to CPC. Meet at the main entrance?',
+    ],
+  },
+  {
+    start: 'College Park Center',
+    destination: 'Science Hall',
+    messages: [
+      'Leaving College Park Center for Science Hall—company welcome!',
+      'Walking to Science Hall from CPC after the event. Join me?',
+      'Need a buddy from College Park Center to Science Hall. Heading out soon.',
+      'Taking the route from CPC to Science Hall—let’s walk together.',
+    ],
+  },
+  {
+    start: 'Engineering Research Building',
+    destination: 'Fine Arts Building',
+    messages: [
+      'Heading from ERB to Fine Arts for rehearsal—walk buddy wanted.',
+      'Need a partner for the walk from ERB to the Fine Arts Building.',
+      'Walking ERB to Fine Arts—anyone else going that way?',
+      'Leaving ERB now and heading to Fine Arts. Join me for the walk?',
+    ],
+  },
+  {
+    start: 'Fine Arts Building',
+    destination: 'Business Building',
+    messages: [
+      'Fine Arts to Business Building walk—who’s coming?',
+      'Heading toward the Business Building from Fine Arts. Looking for company!',
+      'Need a safe walk from Fine Arts to Business Building—meet outside the lobby?',
+      'Walking from the mural at Fine Arts over to the Business Building. Join in!',
+    ],
+  },
+  {
+    start: 'Arlington Hall',
+    destination: 'Central Library',
+    messages: [
+      'Leaving Arlington Hall for the library—walk with me?',
+      'Need a buddy from Arlington Hall to Central Library this evening.',
+      'Heading toward Central Library from Arlington Hall. Company appreciated!',
+      'Looking for a safe walk from Arlington Hall to the library fountain.',
+    ],
+  },
+];
+
 const seedUsers = () => {
   const existingUsers = querySingle('SELECT COUNT(1) AS count FROM users');
   if (existingUsers && existingUsers.count > 0) {
@@ -462,6 +600,51 @@ const seedWalkRequests = () => {
   });
 };
 
+const seedMessages = () => {
+  routeMessageSeedData.forEach(({ start, destination, messages }) => {
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return;
+    }
+
+    const startLocation = getLocationByName(start);
+    const destinationLocation = getLocationByName(destination);
+    const route = startLocation && destinationLocation
+      ? getRouteBetweenLocations(start, destination)
+      : null;
+
+    if (!startLocation || !destinationLocation) {
+      return;
+    }
+
+    messages.forEach((messageText) => {
+      const trimmedMessage = typeof messageText === 'string' ? messageText.trim() : '';
+
+      if (!trimmedMessage) {
+        return;
+      }
+
+      const existingMessage = querySingle(
+        `SELECT id FROM messages WHERE message = ? AND start_location_id = ? AND end_location_id = ?`,
+        [trimmedMessage, startLocation.id, destinationLocation.id]
+      );
+
+      if (existingMessage) {
+        return;
+      }
+
+      querySingle(
+        `INSERT INTO messages (message, route_id, start_location_id, end_location_id) VALUES (?, ?, ?, ?) RETURNING id`,
+        [
+          trimmedMessage,
+          route ? route.id : null,
+          startLocation.id,
+          destinationLocation.id,
+        ]
+      );
+    });
+  });
+};
+
 const initializeDatabase = () => {
   execute(`
     PRAGMA foreign_keys = ON;
@@ -551,6 +734,7 @@ const initializeDatabase = () => {
   seedLocations();
   seedRoutes();
   seedWalkRequests();
+  seedMessages();
 };
 
 const getLocationByName = (name) => {
@@ -762,14 +946,14 @@ const getWalkRequestById = (walkId) => {
 
 const createWalkRequest = ({ userId, startLocationName, destinationLocationName }) => {
   if (!userId || !startLocationName || !destinationLocationName) {
-    throw new Error('userId, startLocation, and destination are required.');
+    throw new ValidationError('userId, startLocation, and destination are required.');
   }
 
   const startLocation = getLocationByName(startLocationName);
   const destinationLocation = getLocationByName(destinationLocationName);
 
   if (!startLocation || !destinationLocation) {
-    throw new Error('Unable to find start or destination location.');
+    throw new ValidationError('Unable to find start or destination location.');
   }
 
   const route = getRouteBetweenLocations(startLocationName, destinationLocationName);
@@ -824,7 +1008,7 @@ const getAllLocations = () => {
 
 const saveMessage = ({ message, startLocationName, destinationLocationName }) => {
   if (!message || !message.trim()) {
-    throw new Error('Message content is required.');
+    throw new ValidationError('Message content is required.');
   }
 
   const startLocation = getLocationByName(startLocationName);
@@ -875,6 +1059,7 @@ const getMessages = () => {
 };
 
 module.exports = {
+  ValidationError,
   initializeDatabase,
   findUserByCredentials,
   getAllLocations,
@@ -889,4 +1074,7 @@ module.exports = {
   getAllRoutes,
   saveMessage,
   getMessages,
+  __test__: {
+    formatSql,
+  },
 };
