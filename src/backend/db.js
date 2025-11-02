@@ -37,17 +37,45 @@ const escapeValue = (value) => {
 };
 
 const formatSql = (sql, params) => {
-  let formattedSql = sql;
-  params.forEach((param) => {
-    const placeholderIndex = formattedSql.indexOf('?');
-    if (placeholderIndex === -1) {
-      throw new Error('Too many parameters supplied for SQL statement.');
-    }
-    formattedSql = `${formattedSql.slice(0, placeholderIndex)}${escapeValue(param)}${formattedSql.slice(placeholderIndex + 1)}`;
-  });
+  let formattedSql = '';
+  let paramIndex = 0;
+  let inSingleQuote = false;
 
-  if (formattedSql.includes('?')) {
-    throw new Error('Not enough parameters supplied for SQL statement.');
+  for (let i = 0; i < sql.length; i += 1) {
+    const char = sql[i];
+
+    if (char === "'") {
+      formattedSql += char;
+
+      if (inSingleQuote) {
+        if (i + 1 < sql.length && sql[i + 1] === "'") {
+          formattedSql += "'";
+          i += 1;
+        } else {
+          inSingleQuote = false;
+        }
+      } else {
+        inSingleQuote = true;
+      }
+
+      continue;
+    }
+
+    if (char === '?' && !inSingleQuote) {
+      if (paramIndex >= params.length) {
+        throw new Error('Not enough parameters supplied for SQL statement.');
+      }
+
+      formattedSql += escapeValue(params[paramIndex]);
+      paramIndex += 1;
+      continue;
+    }
+
+    formattedSql += char;
+  }
+
+  if (paramIndex < params.length) {
+    throw new Error('Too many parameters supplied for SQL statement.');
   }
 
   return formattedSql;
@@ -1046,4 +1074,7 @@ module.exports = {
   getAllRoutes,
   saveMessage,
   getMessages,
+  __test__: {
+    formatSql,
+  },
 };
