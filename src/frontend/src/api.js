@@ -27,6 +27,10 @@ export async function postMessage(payload) {
   return request('/api/messages', { method: 'POST', body: payload });
 }
 
+export async function postWalkCompletion(payload) {
+  return request('/api/walks/completions', { method: 'POST', body: payload });
+}
+
 export async function getRandomMessage({ start, destination } = {}) {
   const qs = new URLSearchParams();
   if (start) qs.set('start', start);

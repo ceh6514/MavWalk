@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
@@ -8,9 +8,20 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import mavWalkLogo from './MavWalkLogo.png';
 import utaLogo from './142-1425701_university-of-texas-uta-logo-university-of-texas-at-arlington-logo.png';
-import { getRoutes as apiGetRoutes, getRandomMessage, getStats as apiGetStats, postMessage as apiPostMessage } from './api';
+import {
+  getRoutes as apiGetRoutes,
+  getRandomMessage,
+  getStats as apiGetStats,
+  postMessage as apiPostMessage,
+  postWalkCompletion as apiPostWalkCompletion,
+} from './api';
 
+const parseStatCount = (value) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+};
 
+const formatStat = (value) => (typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString() : '—');
 
 const defaultMarkerIcon = L.icon({
   iconUrl: markerIcon,
@@ -40,11 +51,14 @@ const App = () => {
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [hasSubmittedMessage, setHasSubmittedMessage] = useState(false);
   const [stats, setStats] = useState({ walksToday: null, messagesShared: null });
+  const [completionStatus, setCompletionStatus] = useState(null);
+  const [isRecordingCompletion, setIsRecordingCompletion] = useState(false);
 
   // Map/location state
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState(null);
   const watchIdRef = useRef(null);
+  const isMountedRef = useRef(false);
 
   // Message-fetching state (new)
   const [encouragement, setEncouragement] = useState(null);
@@ -52,35 +66,35 @@ const App = () => {
   const [msgError, setMsgError] = useState(null);
 
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const data = await apiGetStats();
-        if (!alive) {
-          return;
-        }
+    setCompletionStatus(null);
+  }, [stage]);
 
-        const parseCount = (value) => {
-          const numberValue = Number(value);
-          return Number.isFinite(numberValue) ? numberValue : null;
-        };
-
-        setStats({
-          walksToday: parseCount(data?.walksToday),
-          messagesShared: parseCount(data?.messagesShared),
-        });
-      } catch (error) {
-        if (alive) {
-          // eslint-disable-next-line no-console
-          console.error('Failed to load stats.', error);
-        }
+  const refreshStats = useCallback(async () => {
+    try {
+      const data = await apiGetStats();
+      if (!isMountedRef.current) {
+        return;
       }
-    })();
 
-    return () => {
-      alive = false;
-    };
+      setStats({
+        walksToday: parseStatCount(data?.walksToday),
+        messagesShared: parseStatCount(data?.messagesShared),
+      });
+    } catch (error) {
+      if (isMountedRef.current) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load stats.', error);
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    refreshStats();
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [refreshStats]);
 
   useEffect(() => {
     let alive = true;
@@ -316,9 +330,47 @@ const App = () => {
     setStage('message'); // the effect above will fetch the encouragement
   };
 
+  const handleCompleteWalk = async () => {
+    if (isRecordingCompletion) {
+      return;
+    }
+
+    setCompletionStatus(null);
+    setIsRecordingCompletion(true);
+
+    try {
+      await apiPostWalkCompletion({
+        startLocation,
+        destination,
+      });
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      await refreshStats();
+      if (!isMountedRef.current) {
+        return;
+      }
+      setStage('completion');
+    } catch (error) {
+      if (!isMountedRef.current) {
+        return;
+      }
+      setCompletionStatus({
+        type: 'error',
+        message: `Could not record your walk. ${error?.message || 'Please try again.'}`,
+      });
+    } finally {
+      if (isMountedRef.current) {
+        setIsRecordingCompletion(false);
+      }
+    }
+  };
+
   const handleSendMessage = async (event) => {
     event.preventDefault();
-  
+
     if (hasSubmittedMessage) {
       setSubmissionStatus({
         type: 'info',
@@ -344,26 +396,32 @@ const App = () => {
         startLocation: startLocation,
         destination: destination,
       });
-  
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
       setSubmissionStatus({
         type: 'success',
         message: 'Thanks! Your message was saved for future Mavericks to enjoy. Tap Finish to end your walk.',
       });
       setUserMessage('');
       setHasSubmittedMessage(true);
+      await refreshStats();
     } catch (e) {
+      if (!isMountedRef.current) {
+        return;
+      }
       setSubmissionStatus({
         type: 'error',
         message: `Could not save your message. ${e.message || 'Please try again.'}`,
       });
     } finally {
-      setIsSavingMessage(false);
+      if (isMountedRef.current) {
+        setIsSavingMessage(false);
+      }
     }
   };
-  
-
-  const formatStat = (value) => (typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString() : '—');
-
   const renderHeader = (subtitle) => (
     <header className="text-center space-y-4">
       <div className="mx-auto w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-lg p-3">
@@ -713,12 +771,23 @@ const App = () => {
                 </MapContainer>
               </div>
 
+              {completionStatus && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-base text-red-700">
+                  {completionStatus.message}
+                </div>
+              )}
+
               <button
                 type="button"
-                onClick={() => setStage('completion')}
-                className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white text-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                onClick={handleCompleteWalk}
+                disabled={isRecordingCompletion}
+                className={`w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white text-lg font-bold shadow-lg transition-all duration-200 ${
+                  isRecordingCompletion
+                    ? 'cursor-not-allowed opacity-70'
+                    : 'hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
+                }`}
               >
-                I've Arrived
+                {isRecordingCompletion ? 'Wrapping up…' : "I've Arrived"}
               </button>
             </div>
           )}
