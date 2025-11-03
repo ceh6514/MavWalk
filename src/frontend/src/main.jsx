@@ -383,20 +383,10 @@ const App = () => {
             </div>
           </div>
           
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-white hover:text-gray-200 font-medium text-base">Features</a>
-            <a href="#" className="text-white hover:text-gray-200 font-medium text-base">Campus Map</a>
-            <a href="#" className="text-white hover:text-gray-200 font-medium text-base">Community</a>
-            <a href="#" className="text-white hover:text-gray-200 font-medium text-base">Support</a>
-          </div>
-          
           <div className="flex items-center gap-3">
             <button className="bg-green-500 text-white px-5 py-2.5 rounded-lg font-semibold text-base flex items-center gap-2 hover:bg-green-600 transition-colors">
               <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
               Live
-            </button>
-            <button className="border border-white/30 px-5 py-2.5 rounded-lg font-semibold text-base text-white hover:bg-white/10 transition-colors">
-              Sign In
             </button>
           </div>
         </div>
@@ -728,6 +718,21 @@ const App = () => {
                     {submissionStatus.message}
                   </div>
                 )}
+
+                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 text-base text-blue-800">
+                  <p className="font-semibold">We'd love your feedback!</p>
+                  <p className="mt-1 text-sm text-blue-700">
+                    Help us enhance MavWalk by taking a quick survey about your experience.
+                  </p>
+                  <a
+                    href="https://docs.google.com/forms/d/e/1FAIpQLScs3F9rVS34BXsj1uKQu4iI-0681Q3Jljz9cN1182Hbw6CSGg/viewform"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                  >
+                    Take the survey
+                  </a>
+                </div>
 
                 <div className="space-y-3">
                   <button
