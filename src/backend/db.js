@@ -717,6 +717,17 @@ const initializeDatabase = () => {
       FOREIGN KEY(end_location_id) REFERENCES locations(id)
     );
 
+    CREATE TABLE IF NOT EXISTS walk_completions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      route_id INTEGER,
+      start_location_id INTEGER NOT NULL,
+      end_location_id INTEGER NOT NULL,
+      completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(route_id) REFERENCES routes(id),
+      FOREIGN KEY(start_location_id) REFERENCES locations(id),
+      FOREIGN KEY(end_location_id) REFERENCES locations(id)
+    );
+
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       route_id INTEGER,
@@ -1058,6 +1069,67 @@ const getMessages = () => {
   `);
 };
 
+const recordWalkCompletion = ({ startLocationName, destinationLocationName }) => {
+  const startLocation = getLocationByName(startLocationName);
+  if (!startLocation) {
+    throw new ValidationError(`Unknown start location: ${startLocationName}`);
+  }
+
+  const destinationLocation = getLocationByName(destinationLocationName);
+  if (!destinationLocation) {
+    throw new ValidationError(`Unknown destination: ${destinationLocationName}`);
+  }
+
+  const route = getRouteBetweenLocations(startLocationName, destinationLocationName);
+
+  const insertedCompletion = querySingle(
+    `INSERT INTO walk_completions (route_id, start_location_id, end_location_id)
+     VALUES (?, ?, ?) RETURNING id`,
+    [route ? route.id : null, startLocation.id, destinationLocation.id]
+  );
+
+  return querySingle(
+    `SELECT
+       wc.id,
+       wc.completed_at AS completedAt,
+       start.name AS startLocation,
+       destination.name AS destination
+     FROM walk_completions wc
+     LEFT JOIN locations start ON start.id = wc.start_location_id
+     LEFT JOIN locations destination ON destination.id = wc.end_location_id
+     WHERE wc.id = ?`,
+    [insertedCompletion.id]
+  );
+};
+
+const getWalksTodayCount = () => {
+  const completionRow = querySingle(
+    `SELECT COUNT(*) AS count
+     FROM walk_completions
+     WHERE DATE(completed_at) = DATE('now', 'localtime')`
+  );
+
+  const requestRow = querySingle(
+    `SELECT COUNT(*) AS count
+     FROM walk_requests
+     WHERE DATE(request_time) = DATE('now', 'localtime')`
+  );
+
+  const completions = completionRow ? Number(completionRow.count) || 0 : 0;
+  const requests = requestRow ? Number(requestRow.count) || 0 : 0;
+
+  return completions + requests;
+};
+
+const getMessagesCount = () => {
+  const row = querySingle(
+    `SELECT COUNT(*) AS count
+     FROM messages`
+  );
+
+  return row ? Number(row.count) || 0 : 0;
+};
+
 module.exports = {
   ValidationError,
   initializeDatabase,
@@ -1074,6 +1146,9 @@ module.exports = {
   getAllRoutes,
   saveMessage,
   getMessages,
+  recordWalkCompletion,
+  getWalksTodayCount,
+  getMessagesCount,
   __test__: {
     formatSql,
   },

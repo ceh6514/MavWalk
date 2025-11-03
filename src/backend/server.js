@@ -17,6 +17,9 @@ const {
     getAllRoutes,
     saveMessage,
     getMessages,
+    recordWalkCompletion,
+    getWalksTodayCount,
+    getMessagesCount,
 } = require('./db');
 
 const {
@@ -49,6 +52,42 @@ const createApp = () => {
 
     //A simple test route
     app.get('/', (req, res) => res.send('MavWalk Backend Server is running!')); //SUCCESS MESSAGE!
+
+    app.get('/api/stats', (req, res) => {
+        try {
+            const walksToday = getWalksTodayCount();
+            const messagesShared = getMessagesCount();
+
+            res.json({ walksToday, messagesShared });
+        } catch (error) {
+            return handleError(res, error, {
+                logMessage: 'Failed to load stats:',
+                responseMessage: 'Unable to load stats.',
+            });
+        }
+    });
+
+    app.post('/api/walks/completions', (req, res) => {
+        try {
+            const startLocation = getRequiredString(req.body?.startLocation, 'startLocation');
+            const destination = getRequiredString(req.body?.destination, 'destination');
+
+            const completion = recordWalkCompletion({
+                startLocationName: startLocation,
+                destinationLocationName: destination,
+            });
+
+            res.status(201).json({
+                message: 'Walk completion recorded.',
+                completion,
+            });
+        } catch (error) {
+            return handleError(res, error, {
+                logMessage: 'Failed to record walk completion:',
+                responseMessage: 'Unable to record walk completion.',
+            });
+        }
+    });
 
     //User login
     app.post('/api/login', (req, res) => {
