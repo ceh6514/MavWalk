@@ -1058,6 +1058,25 @@ const getMessages = () => {
   `);
 };
 
+const getWalksTodayCount = () => {
+  const row = querySingle(
+    `SELECT COUNT(*) AS count
+     FROM walk_requests
+     WHERE DATE(request_time) = DATE('now', 'localtime')`
+  );
+
+  return row ? Number(row.count) || 0 : 0;
+};
+
+const getMessagesCount = () => {
+  const row = querySingle(
+    `SELECT COUNT(*) AS count
+     FROM messages`
+  );
+
+  return row ? Number(row.count) || 0 : 0;
+};
+
 module.exports = {
   ValidationError,
   initializeDatabase,
@@ -1074,6 +1093,8 @@ module.exports = {
   getAllRoutes,
   saveMessage,
   getMessages,
+  getWalksTodayCount,
+  getMessagesCount,
   __test__: {
     formatSql,
   },

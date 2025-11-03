@@ -34,3 +34,7 @@ export async function getRandomMessage({ start, destination } = {}) {
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
   return request(`/api/messages/random${suffix}`);
 }
+
+export async function getStats() {
+  return request('/api/stats');
+}

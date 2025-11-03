@@ -8,7 +8,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import mavWalkLogo from './MavWalkLogo.png';
 import utaLogo from './142-1425701_university-of-texas-uta-logo-university-of-texas-at-arlington-logo.png';
-import { getRoutes as apiGetRoutes, getRandomMessage, postMessage as apiPostMessage } from './api';
+import { getRoutes as apiGetRoutes, getRandomMessage, getStats as apiGetStats, postMessage as apiPostMessage } from './api';
 
 
 
@@ -39,6 +39,7 @@ const App = () => {
   const [isSavingMessage, setIsSavingMessage] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [hasSubmittedMessage, setHasSubmittedMessage] = useState(false);
+  const [stats, setStats] = useState({ walksToday: null, messagesShared: null });
 
   // Map/location state
   const [userLocation, setUserLocation] = useState(null);
@@ -49,6 +50,37 @@ const App = () => {
   const [encouragement, setEncouragement] = useState(null);
   const [msgLoading, setMsgLoading] = useState(false);
   const [msgError, setMsgError] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const data = await apiGetStats();
+        if (!alive) {
+          return;
+        }
+
+        const parseCount = (value) => {
+          const numberValue = Number(value);
+          return Number.isFinite(numberValue) ? numberValue : null;
+        };
+
+        setStats({
+          walksToday: parseCount(data?.walksToday),
+          messagesShared: parseCount(data?.messagesShared),
+        });
+      } catch (error) {
+        if (alive) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to load stats.', error);
+        }
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -330,6 +362,8 @@ const App = () => {
   };
   
 
+  const formatStat = (value) => (typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString() : '—');
+
   const renderHeader = (subtitle) => (
     <header className="text-center space-y-4">
       <div className="mx-auto w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-lg p-3">
@@ -345,11 +379,11 @@ const App = () => {
       <div className="flex items-center justify-center gap-8 text-base text-gray-500 pt-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">👥</span>
-          <span>2,847 walks today</span>
+          <span>{`${formatStat(stats.walksToday)} walks today`}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-lg">❤️</span>
-          <span>1,293 messages shared</span>
+          <span>{`${formatStat(stats.messagesShared)} messages shared`}</span>
         </div>
       </div>
     </header>
