@@ -462,100 +462,100 @@ const routeMessageSeedData = [
     start: 'Central Library',
     destination: 'Maverick Activities Center',
     messages: [
-      'Enjoy the stroll from Central Library to the MAC—perfect moment to reset your mind.',
-      'Take a deep breath and enjoy the sunshine on the way from the library to the MAC.',
-      'You earned this break between the library and the MAC—enjoy every step.',
-      'A calm walk from Central Library to the MAC is the best way to recharge.',
+      'Take a refreshing walk from the library to the MAC—let the breeze recharge you.',
+      'You deserve this break between study sessions and the MAC—enjoy every step.',
+      'Let the sunshine guide you from Central Library to the MAC with confidence.',
+      'Feel your energy lift as you head from the library toward the MAC.',
     ],
   },
   {
     start: 'Central Library',
     destination: 'Science & Engineering Innovation & Research Building',
     messages: [
-      'Heading from Central Library to SEIR—let the fresh air spark your next idea.',
-      'This walk from the library to SEIR is a great warm-up for brilliant thinking.',
-      'Enjoy the quick walk to SEIR—consider it a moving study break.',
-      'Library to SEIR is a peaceful path—let it fuel your curiosity.',
+      'Take a mindful breather on the short walk from Central Library to SEIR.',
+      'Let curiosity lead the way from the library to SEIR—great ideas await.',
+      'Enjoy the calm path to SEIR and arrive ready to explore something new.',
+      'A quick walk to SEIR is the perfect reset—enjoy the view as you go.',
     ],
   },
   {
     start: 'Central Library',
     destination: 'Science Hall',
     messages: [
-      'Enjoy the tree-lined walk from the library to Science Hall—nature’s study buddy.',
-      'Take a calm moment between the library and Science Hall—you deserve it.',
-      'Let the fresh air guide you from Central Library to Science Hall with confidence.',
-      'Science Hall is just ahead—enjoy the peaceful steps getting there.',
+      'Stroll to Science Hall with a smile—fresh air fuels fresh thinking.',
+      'Enjoy the gentle walk from Central Library to Science Hall—you are doing great.',
+      'Let the tree-lined path to Science Hall brighten your day.',
+      'Science Hall is just ahead—take these moments to breathe and unwind.',
     ],
   },
   {
     start: 'Science & Engineering Innovation & Research Building',
     destination: 'Nedderman Hall',
     messages: [
-      'Take a mindful pause on the short stroll from SEIR to Nedderman Hall.',
-      'Enjoy the campus breeze while heading from SEIR to Nedderman—great things await.',
-      'SEIR to Nedderman is a quick walk—use it to reset and refocus.',
-      'Celebrate small wins with each step from SEIR to Nedderman Hall.',
+      'Enjoy the breeze as you head from SEIR to Nedderman Hall—steady and calm.',
+      'Take a peaceful pause on the way to Nedderman Hall—you\'ve earned it.',
+      'Let each step from SEIR to Nedderman Hall fill you with confidence.',
+      'Celebrate your progress with a relaxed stroll over to Nedderman Hall.',
     ],
   },
   {
     start: 'Maverick Activities Center',
     destination: 'University Center',
     messages: [
-      'Cool down from the MAC to the UC—enjoy the rhythm of your steps.',
-      'Let the walk from the MAC to the UC be your well-earned cooldown.',
-      'Feel the energy shift as you head from the MAC to the UC—great job today.',
-      'Enjoy a relaxed stroll from MAC to the UC—you’ve earned this peaceful moment.',
+      'Ease into a calm pace as you walk from the MAC to the UC.',
+      'Let the path to the UC be your gentle cooldown—you\'re doing amazing.',
+      'Feel the campus energy cheering you on from the MAC to the UC.',
+      'Enjoy the transition from workout to hangout as you head toward the UC.',
     ],
   },
   {
     start: 'University Center',
     destination: 'College Park Center',
     messages: [
-      'Feel the excitement build on the walk from UC to College Park Center.',
-      'Enjoy the buzz of campus life between the UC and College Park Center.',
-      'Let the walk from UC to CPC boost your game-day spirit.',
-      'Take in the sights on the way from UC to College Park Center—UTA pride all around.',
+      'Bring the lively UC energy with you as you head to College Park Center.',
+      'Enjoy the buzz of campus life along the UC to CPC path.',
+      'Each step toward College Park Center is a celebration—enjoy it.',
+      'Smile as you walk from the UC to CPC—great moments are ahead.',
     ],
   },
   {
     start: 'College Park Center',
     destination: 'Science Hall',
     messages: [
-      'Carry the excitement from College Park Center straight into Science Hall.',
-      'Enjoy the calm walk from CPC to Science Hall—perfect cooldown from the action.',
-      'Let the path from College Park Center to Science Hall inspire your next breakthrough.',
-      'Science Hall is just ahead—enjoy the peaceful steps from CPC.',
+      'Savor the calm walk from College Park Center to Science Hall.',
+      'Let the route from CPC to Science Hall help you reset and refocus.',
+      'Enjoy the peaceful steps toward Science Hall—you’ve got this.',
+      'Feel the campus settle around you as you stroll from CPC to Science Hall.',
     ],
   },
   {
     start: 'Engineering Research Building',
     destination: 'Fine Arts Building',
     messages: [
-      'Let creativity flow as you walk from ERB to the Fine Arts Building.',
-      'Enjoy the balance of science and art on the path from ERB to Fine Arts.',
-      'Breathe in inspiration while heading from ERB to the Fine Arts Building.',
-      'Take this stroll from ERB to Fine Arts as a moment to celebrate your talents.',
+      'Shift from engineering mode to creative mode on the walk to Fine Arts.',
+      'Enjoy the blend of ideas as you head from ERB to the Fine Arts Building.',
+      'Let inspiration guide your steps from ERB to Fine Arts.',
+      'Celebrate your talents with a relaxed stroll toward the Fine Arts Building.',
     ],
   },
   {
     start: 'Fine Arts Building',
     destination: 'Business Building',
     messages: [
-      'Shift gears from creativity to strategy on the walk to the Business Building.',
-      'Enjoy the change of pace between Fine Arts and the Business Building.',
-      'Let the walk from Fine Arts to the Business Building spark new ideas.',
-      'Carry that artistic energy with you on the way to the Business Building.',
+      'Carry your creative spark from Fine Arts over to the Business Building.',
+      'Let fresh ideas accompany you on the walk to the Business Building.',
+      'Enjoy the change of scenery as you head toward the Business Building.',
+      'Feel confident and calm as you stroll from Fine Arts to the Business Building.',
     ],
   },
   {
     start: 'Arlington Hall',
     destination: 'Central Library',
     messages: [
-      'Enjoy the calm walk from Arlington Hall to the Central Library—perfect study mindset.',
-      'Let the short stroll to the library help you settle into focus mode.',
-      'Take a peaceful moment for yourself walking from Arlington Hall to the library.',
-      'Feel the campus energy guiding you from Arlington Hall to Central Library.',
+      'Enjoy a peaceful stroll from Arlington Hall to Central Library.',
+      'Let the walk to the library center your thoughts and set the tone for success.',
+      'Feel supported by campus as you head from Arlington Hall to Central Library.',
+      'Take this time walking to the library to breathe and smile—you’re doing great.',
     ],
   },
 ];
@@ -1216,16 +1216,7 @@ const getWalksTodayCount = () => {
      WHERE DATE(completed_at, 'localtime') = DATE('now', 'localtime')`
   );
 
-  const requestRow = querySingle(
-    `SELECT COUNT(*) AS count
-     FROM walk_requests
-     WHERE DATE(request_time, 'localtime') = DATE('now', 'localtime')`
-  );
-
-  const completions = completionRow ? Number(completionRow.count) || 0 : 0;
-  const requests = requestRow ? Number(requestRow.count) || 0 : 0;
-
-  return completions + requests;
+  return completionRow ? Number(completionRow.count) || 0 : 0;
 };
 
 const getMessagesCount = () => {
