@@ -18,18 +18,16 @@ function normaliseBaseUrl(urlString) {
 }
 
 function computeBaseUrl() {
+  // 1) If an explicit env base URL is provided, respect it
   const normalised = normaliseBaseUrl(rawEnvBaseUrl);
-  if (normalised) {
-    return normalised;
-  }
+  if (normalised) return normalised;
 
+  // 2) In dev, prefer Vite proxy: same-origin '' so fetch('/api/...') works
   if (typeof window !== 'undefined' && import.meta.env.DEV) {
-    const protocol = window.location.protocol;
-    const host = window.location.hostname;
-    const port = import.meta.env.VITE_API_PORT?.trim() || '3001';
-    return `${protocol}//${host}:${port}`;
+    return '';
   }
 
+  // 3) In production builds, default to same-origin
   return '';
 }
 
@@ -77,4 +75,11 @@ export async function getRandomMessage({ start, destination } = {}) {
 
 export async function getStats() {
   return request('/api/stats');
+}
+
+// vite.config.ts
+export default {
+  server: {
+    proxy: { '/api': { target: 'http://localhost:3001', changeOrigin: true } }
+  }
 }
