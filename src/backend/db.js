@@ -129,6 +129,19 @@ const querySingle = (sql, params = []) => {
   return first || null;
 };
 
+const getTableColumns = (tableName) => {
+  return query(`PRAGMA table_info(${tableName})`);
+};
+
+const ensureColumn = (tableName, columnName, definition) => {
+  const columns = getTableColumns(tableName);
+  const exists = columns.some((column) => column.name === columnName);
+
+  if (!exists) {
+    execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+  }
+};
+
 const campusLocationSeedData = [
   { name: 'Arlington Hall', latitude: 32.7311085432566, longitude: -97.10943893455445 },
   { name: 'Business Building', latitude: 32.729722823761264, longitude: -97.11062181276046 },
@@ -552,6 +565,114 @@ const seedRoutes = () => {
   });
 };
 
+const formatEtaFromSeconds = (seconds) => {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds)) {
+    return null;
+  }
+
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+};
+
+const upsertRoute = ({ startLocationId, endLocationId, etaSeconds, distanceMeters, summary }) => {
+  if (!startLocationId || !endLocationId) {
+    throw new ValidationError('startLocationId and endLocationId are required to upsert a route.');
+  }
+
+  const etaText = formatEtaFromSeconds(etaSeconds);
+
+  const existingRoute = querySingle(
+    'SELECT id FROM routes WHERE start_location_id = ? AND end_location_id = ?',
+    [startLocationId, endLocationId]
+  );
+
+  if (existingRoute) {
+    execute(
+      `UPDATE routes
+         SET eta = COALESCE(?, eta),
+             eta_seconds = ?,
+             distance_meters = ?,
+             summary = COALESCE(?, summary)
+       WHERE id = ?`,
+      [etaText, etaSeconds ?? null, distanceMeters ?? null, summary ?? null, existingRoute.id]
+    );
+
+    return existingRoute.id;
+  }
+
+  const insertedRoute = querySingle(
+    `INSERT INTO routes (start_location_id, end_location_id, eta, summary, eta_seconds, distance_meters)
+     VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+    [startLocationId, endLocationId, etaText, summary || null, etaSeconds ?? null, distanceMeters ?? null]
+  );
+
+  return insertedRoute.id;
+};
+
+const normalizeCoordinate = (coordinate) => {
+  if (!coordinate) {
+    return null;
+  }
+
+  if (Array.isArray(coordinate) && coordinate.length >= 2) {
+    const [latitude, longitude] = coordinate;
+    return {
+      latitude: Number(latitude),
+      longitude: Number(longitude),
+    };
+  }
+
+  if (typeof coordinate.lat === 'number' && typeof coordinate.lng === 'number') {
+    return {
+      latitude: Number(coordinate.lat),
+      longitude: Number(coordinate.lng),
+    };
+  }
+
+  return null;
+};
+
+const replaceRouteCoordinates = (routeId, coordinates) => {
+  if (!routeId) {
+    throw new ValidationError('routeId is required when replacing route coordinates.');
+  }
+
+  execute('DELETE FROM route_coordinates WHERE route_id = ?', [routeId]);
+
+  (coordinates || []).forEach((coordinate, index) => {
+    const normalized = normalizeCoordinate(coordinate);
+    if (!normalized) {
+      return;
+    }
+
+    execute(
+      `INSERT INTO route_coordinates (route_id, point_index, latitude, longitude)
+       VALUES (?, ?, ?, ?)`,
+      [routeId, index, normalized.latitude, normalized.longitude]
+    );
+  });
+};
+
+const replaceRouteSteps = (routeId, steps) => {
+  if (!routeId) {
+    throw new ValidationError('routeId is required when replacing route steps.');
+  }
+
+  execute('DELETE FROM route_steps WHERE route_id = ?', [routeId]);
+
+  (steps || []).forEach((instruction, index) => {
+    if (!instruction) {
+      return;
+    }
+
+    execute(
+      `INSERT INTO route_steps (route_id, step_number, instruction)
+       VALUES (?, ?, ?)`,
+      [routeId, index + 1, String(instruction)]
+    );
+  });
+};
+
 const seedWalkRequests = () => {
   const existingWalks = querySingle('SELECT COUNT(1) AS count FROM walk_requests');
   if (existingWalks && existingWalks.count > 0) {
@@ -747,6 +868,9 @@ const initializeDatabase = () => {
     );
   `);
 
+  ensureColumn('routes', 'eta_seconds', 'INTEGER');
+  ensureColumn('routes', 'distance_meters', 'REAL');
+
   seedUsers();
   seedLocations();
   seedRoutes();
@@ -788,6 +912,14 @@ const buildRouteDetails = (routeRow) => {
     destinationCoordinates: [routeRow.endLatitude, routeRow.endLongitude],
     pathCoordinates: coordinates,
     eta: routeRow.eta,
+    etaSeconds:
+      routeRow.etaSeconds !== undefined && routeRow.etaSeconds !== null
+        ? Number(routeRow.etaSeconds)
+        : null,
+    distanceMeters:
+      routeRow.distanceMeters !== undefined && routeRow.distanceMeters !== null
+        ? Number(routeRow.distanceMeters)
+        : null,
     summary: routeRow.summary,
     steps,
   };
@@ -808,12 +940,42 @@ const getRouteBetweenLocations = (start, destination) => {
        e.latitude AS endLatitude,
        e.longitude AS endLongitude,
        r.eta,
-       r.summary
+       r.summary,
+       r.eta_seconds AS etaSeconds,
+       r.distance_meters AS distanceMeters
      FROM routes r
      INNER JOIN locations s ON r.start_location_id = s.id
      INNER JOIN locations e ON r.end_location_id = e.id
      WHERE s.name = ? AND e.name = ?`,
     [start, destination]
+  );
+
+  return buildRouteDetails(routeRow);
+};
+
+const findRouteByStartEnd = (startLocationId, endLocationId) => {
+  if (!startLocationId || !endLocationId) {
+    return null;
+  }
+
+  const routeRow = querySingle(
+    `SELECT
+       r.id,
+       s.name AS startLocation,
+       s.latitude AS startLatitude,
+       s.longitude AS startLongitude,
+       e.name AS destination,
+       e.latitude AS endLatitude,
+       e.longitude AS endLongitude,
+       r.eta,
+       r.summary,
+       r.eta_seconds AS etaSeconds,
+       r.distance_meters AS distanceMeters
+     FROM routes r
+     INNER JOIN locations s ON r.start_location_id = s.id
+     INNER JOIN locations e ON r.end_location_id = e.id
+     WHERE r.start_location_id = ? AND r.end_location_id = ?`,
+    [startLocationId, endLocationId]
   );
 
   return buildRouteDetails(routeRow);
@@ -834,7 +996,9 @@ const getRouteById = (routeId) => {
        e.latitude AS endLatitude,
        e.longitude AS endLongitude,
        r.eta,
-       r.summary
+       r.summary,
+       r.eta_seconds AS etaSeconds,
+       r.distance_meters AS distanceMeters
      FROM routes r
      INNER JOIN locations s ON r.start_location_id = s.id
      INNER JOIN locations e ON r.end_location_id = e.id
@@ -856,7 +1020,9 @@ const getAllRoutes = () => {
       e.latitude AS endLatitude,
       e.longitude AS endLongitude,
       r.eta,
-      r.summary
+      r.summary,
+      r.eta_seconds AS etaSeconds,
+      r.distance_meters AS distanceMeters
     FROM routes r
     INNER JOIN locations s ON r.start_location_id = s.id
     INNER JOIN locations e ON r.end_location_id = e.id
@@ -1150,6 +1316,11 @@ module.exports = {
   getRouteBetweenLocations,
   getRouteById,
   getAllRoutes,
+  getLocationByName,
+  upsertRoute,
+  replaceRouteCoordinates,
+  replaceRouteSteps,
+  findRouteByStartEnd,
   saveMessage,
   getMessages,
   recordWalkCompletion,

@@ -15,12 +15,20 @@ const {
     completeWalkRequest,
     getRouteBetweenLocations,
     getAllRoutes,
+    getLocationByName,
+    upsertRoute,
+    replaceRouteCoordinates,
+    replaceRouteSteps,
+    findRouteByStartEnd,
     saveMessage,
     getMessages,
     recordWalkCompletion,
     getWalksTodayCount,
     getMessagesCount,
 } = require('./db');
+
+const { routingProvider, routingCacheMode } = require('./config');
+const { fetchWalkingRoute } = require('./lib/osrmClient');
 
 const {
     getRequiredString,
@@ -272,19 +280,93 @@ const createApp = () => {
     });
 
     // Route catalogue endpoints
-    app.get('/api/routes', (req, res) => {
+    const formatDistance = (meters) => {
+        if (typeof meters !== 'number' || !Number.isFinite(meters)) {
+            return null;
+        }
+
+        if (meters >= 1000) {
+            return `${(meters / 1000).toFixed(2)} km`;
+        }
+
+        return `${Math.round(meters)} m`;
+    };
+
+    const formatEtaMinutes = (seconds) => {
+        if (typeof seconds !== 'number' || !Number.isFinite(seconds)) {
+            return null;
+        }
+
+        const minutes = Math.max(1, Math.round(seconds / 60));
+        return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+    };
+
+    app.get('/api/routes', async (req, res) => {
         const start = getOptionalString(req.query.start);
         const destination = getOptionalString(req.query.destination);
 
         try {
             if (start && destination) {
-                const route = getRouteBetweenLocations(start, destination);
+                if (routingProvider === 'seed') {
+                    const route = getRouteBetweenLocations(start, destination);
 
-                if (!route) {
-                    return res.status(404).json({ message: 'Route not found for the selected locations.' });
+                    if (!route) {
+                        return res.status(404).json({ message: 'Route not found for the selected locations.' });
+                    }
+
+                    return res.json(route);
                 }
 
-                return res.json(route);
+                const existingRoute = getRouteBetweenLocations(start, destination);
+
+                if (existingRoute) {
+                    return res.json(existingRoute);
+                }
+
+                if (routingCacheMode === 'precompute') {
+                    return res.status(404).json({ reason: 'missing-precomputed-route' });
+                }
+
+                const startLocation = getLocationByName(start);
+                const destinationLocation = getLocationByName(destination);
+
+                if (!startLocation || !destinationLocation) {
+                    return res.status(404).json({ message: 'Unknown start or destination location.' });
+                }
+
+                const osrmRoute = await fetchWalkingRoute({
+                    start: { lat: startLocation.latitude, lng: startLocation.longitude },
+                    end: { lat: destinationLocation.latitude, lng: destinationLocation.longitude },
+                });
+
+                const summaryParts = [`OSRM walking route from ${start} to ${destination}.`];
+                const distanceText = formatDistance(osrmRoute.distanceMeters);
+                if (distanceText) {
+                    summaryParts.push(`Distance: ${distanceText}.`);
+                }
+                const etaText = formatEtaMinutes(osrmRoute.etaSeconds);
+                if (etaText) {
+                    summaryParts.push(`ETA: ${etaText}.`);
+                }
+
+                const routeId = upsertRoute({
+                    startLocationId: startLocation.id,
+                    endLocationId: destinationLocation.id,
+                    etaSeconds: osrmRoute.etaSeconds ?? null,
+                    distanceMeters: osrmRoute.distanceMeters ?? null,
+                    summary: summaryParts.join(' '),
+                });
+
+                replaceRouteCoordinates(routeId, osrmRoute.coords);
+                replaceRouteSteps(routeId, osrmRoute.steps);
+
+                const persistedRoute = findRouteByStartEnd(startLocation.id, destinationLocation.id);
+
+                if (!persistedRoute) {
+                    return res.status(500).json({ message: 'Failed to persist OSRM route.' });
+                }
+
+                return res.json(persistedRoute);
             }
 
             const routes = getAllRoutes();
