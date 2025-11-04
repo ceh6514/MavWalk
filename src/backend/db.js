@@ -462,100 +462,100 @@ const routeMessageSeedData = [
     start: 'Central Library',
     destination: 'Maverick Activities Center',
     messages: [
-      'Need a buddy from Central Library to the MAC—anyone up for a quick workout?',
-      'Heading to the MAC from the library. Could use some company along the way!',
-      'Library study session is done—walking to the MAC if anyone wants to join.',
-      'Looking for a safe walk from Central Library to the MAC. Meet me by the fountain?',
+      'Enjoy the stroll from Central Library to the MAC—perfect moment to reset your mind.',
+      'Take a deep breath and enjoy the sunshine on the way from the library to the MAC.',
+      'You earned this break between the library and the MAC—enjoy every step.',
+      'A calm walk from Central Library to the MAC is the best way to recharge.',
     ],
   },
   {
     start: 'Central Library',
     destination: 'Science & Engineering Innovation & Research Building',
     messages: [
-      'Walking to SEIR from the library for lab—walk with me?',
-      'Need a partner from Central Library to SEIR. Leaving in five minutes!',
-      'Anyone heading toward SEIR from the library? Let’s walk together.',
-      'Looking for a study buddy en route from Central Library to SEIR.',
+      'Heading from Central Library to SEIR—let the fresh air spark your next idea.',
+      'This walk from the library to SEIR is a great warm-up for brilliant thinking.',
+      'Enjoy the quick walk to SEIR—consider it a moving study break.',
+      'Library to SEIR is a peaceful path—let it fuel your curiosity.',
     ],
   },
   {
     start: 'Central Library',
     destination: 'Science Hall',
     messages: [
-      'Quick walk from Central Library to Science Hall—join me?',
-      'Heading to Science Hall from the library before class. Company appreciated!',
-      'Leaving the library for Science Hall. Walk buddy wanted!',
-      'Need a safe walk from Central Library to Science Hall. Meet near the front steps.',
+      'Enjoy the tree-lined walk from the library to Science Hall—nature’s study buddy.',
+      'Take a calm moment between the library and Science Hall—you deserve it.',
+      'Let the fresh air guide you from Central Library to Science Hall with confidence.',
+      'Science Hall is just ahead—enjoy the peaceful steps getting there.',
     ],
   },
   {
     start: 'Science & Engineering Innovation & Research Building',
     destination: 'Nedderman Hall',
     messages: [
-      'Walking from SEIR to Nedderman for a group meeting—come along?',
-      'Headed to Nedderman from SEIR. Would love a walking buddy!',
-      'Anyone else going from SEIR to Nedderman Hall? Let’s link up.',
-      'Need a partner for the short walk from SEIR over to Nedderman.',
+      'Take a mindful pause on the short stroll from SEIR to Nedderman Hall.',
+      'Enjoy the campus breeze while heading from SEIR to Nedderman—great things await.',
+      'SEIR to Nedderman is a quick walk—use it to reset and refocus.',
+      'Celebrate small wins with each step from SEIR to Nedderman Hall.',
     ],
   },
   {
     start: 'Maverick Activities Center',
     destination: 'University Center',
     messages: [
-      'Leaving the MAC for the UC—walk with me?',
-      'Looking for company from MAC to UC after my workout.',
-      'Heading toward University Center from MAC. Anyone else going that way?',
-      'MAC to UC stroll—seeking a buddy for the evening walk.',
+      'Cool down from the MAC to the UC—enjoy the rhythm of your steps.',
+      'Let the walk from the MAC to the UC be your well-earned cooldown.',
+      'Feel the energy shift as you head from the MAC to the UC—great job today.',
+      'Enjoy a relaxed stroll from MAC to the UC—you’ve earned this peaceful moment.',
     ],
   },
   {
     start: 'University Center',
     destination: 'College Park Center',
     messages: [
-      'Walking from UC to College Park Center for the game—join up!',
-      'Anyone heading to College Park Center from UC? Let’s walk together.',
-      'UC to CPC in a few—looking for a walking partner.',
-      'Need a safe walk from University Center to CPC. Meet at the main entrance?',
+      'Feel the excitement build on the walk from UC to College Park Center.',
+      'Enjoy the buzz of campus life between the UC and College Park Center.',
+      'Let the walk from UC to CPC boost your game-day spirit.',
+      'Take in the sights on the way from UC to College Park Center—UTA pride all around.',
     ],
   },
   {
     start: 'College Park Center',
     destination: 'Science Hall',
     messages: [
-      'Leaving College Park Center for Science Hall—company welcome!',
-      'Walking to Science Hall from CPC after the event. Join me?',
-      'Need a buddy from College Park Center to Science Hall. Heading out soon.',
-      'Taking the route from CPC to Science Hall—let’s walk together.',
+      'Carry the excitement from College Park Center straight into Science Hall.',
+      'Enjoy the calm walk from CPC to Science Hall—perfect cooldown from the action.',
+      'Let the path from College Park Center to Science Hall inspire your next breakthrough.',
+      'Science Hall is just ahead—enjoy the peaceful steps from CPC.',
     ],
   },
   {
     start: 'Engineering Research Building',
     destination: 'Fine Arts Building',
     messages: [
-      'Heading from ERB to Fine Arts for rehearsal—walk buddy wanted.',
-      'Need a partner for the walk from ERB to the Fine Arts Building.',
-      'Walking ERB to Fine Arts—anyone else going that way?',
-      'Leaving ERB now and heading to Fine Arts. Join me for the walk?',
+      'Let creativity flow as you walk from ERB to the Fine Arts Building.',
+      'Enjoy the balance of science and art on the path from ERB to Fine Arts.',
+      'Breathe in inspiration while heading from ERB to the Fine Arts Building.',
+      'Take this stroll from ERB to Fine Arts as a moment to celebrate your talents.',
     ],
   },
   {
     start: 'Fine Arts Building',
     destination: 'Business Building',
     messages: [
-      'Fine Arts to Business Building walk—who’s coming?',
-      'Heading toward the Business Building from Fine Arts. Looking for company!',
-      'Need a safe walk from Fine Arts to Business Building—meet outside the lobby?',
-      'Walking from the mural at Fine Arts over to the Business Building. Join in!',
+      'Shift gears from creativity to strategy on the walk to the Business Building.',
+      'Enjoy the change of pace between Fine Arts and the Business Building.',
+      'Let the walk from Fine Arts to the Business Building spark new ideas.',
+      'Carry that artistic energy with you on the way to the Business Building.',
     ],
   },
   {
     start: 'Arlington Hall',
     destination: 'Central Library',
     messages: [
-      'Leaving Arlington Hall for the library—walk with me?',
-      'Need a buddy from Arlington Hall to Central Library this evening.',
-      'Heading toward Central Library from Arlington Hall. Company appreciated!',
-      'Looking for a safe walk from Arlington Hall to the library fountain.',
+      'Enjoy the calm walk from Arlington Hall to the Central Library—perfect study mindset.',
+      'Let the short stroll to the library help you settle into focus mode.',
+      'Take a peaceful moment for yourself walking from Arlington Hall to the library.',
+      'Feel the campus energy guiding you from Arlington Hall to Central Library.',
     ],
   },
 ];
@@ -1213,13 +1213,13 @@ const getWalksTodayCount = () => {
   const completionRow = querySingle(
     `SELECT COUNT(*) AS count
      FROM walk_completions
-     WHERE DATE(completed_at) = DATE('now', 'localtime')`
+     WHERE DATE(completed_at, 'localtime') = DATE('now', 'localtime')`
   );
 
   const requestRow = querySingle(
     `SELECT COUNT(*) AS count
      FROM walk_requests
-     WHERE DATE(request_time) = DATE('now', 'localtime')`
+     WHERE DATE(request_time, 'localtime') = DATE('now', 'localtime')`
   );
 
   const completions = completionRow ? Number(completionRow.count) || 0 : 0;

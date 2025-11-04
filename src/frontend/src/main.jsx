@@ -194,6 +194,16 @@ const App = () => {
       return;
     }
 
+    const hostIsLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    if (!window.isSecureContext && !hostIsLocal) {
+      setLocationStatus({
+        type: 'error',
+        message:
+          'Live location is unavailable because this page is being served over an insecure connection. Open the demo using HTTPS or a local tunnel to allow location sharing.',
+      });
+      return;
+    }
+
     setLocationStatus({
       type: 'info',
       message: 'Requesting your location so the map can follow your walk. Please allow location access if prompted.',
@@ -207,7 +217,9 @@ const App = () => {
       (error) => {
         let message = 'We could not determine your current location.';
         if (error.code === error.PERMISSION_DENIED) {
-          message = 'Location sharing is blocked. Enable it in your browser to see your position during the walk.';
+          message = window.isSecureContext || hostIsLocal
+            ? 'Location sharing is blocked. Enable it in your browser settings to see your position during the walk.'
+            : 'Location sharing was denied because this page is not using HTTPS. Reload the demo with a secure URL or a local tunnel to enable tracking.';
         } else if (error.code === error.POSITION_UNAVAILABLE) {
           message = 'Location data is temporarily unavailable. We will keep trying to update your position.';
         } else if (error.code === error.TIMEOUT) {
