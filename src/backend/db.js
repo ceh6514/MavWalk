@@ -1076,6 +1076,10 @@ const createWalkRequest = ({ userId, startLocationName, destinationLocationName 
     throw new ValidationError('Unable to find start or destination location.');
   }
 
+  if (startLocation.id === destinationLocation.id) {
+    throw new ValidationError('Start and destination locations must be different.');
+  }
+
   const route = getRouteBetweenLocations(startLocationName, destinationLocationName);
   const eta = route ? route.eta : '7 minutes';
 
