@@ -2,12 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { spawnSync } = require('child_process');
 
-class ValidationError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
+const { ValidationError } = require('./errors');
 
 const MESSAGE_MAX_LENGTH = 280;
 
@@ -90,24 +85,6 @@ const execute = (sql, params = []) => {
   if (result.status !== 0) {
     throw new Error(result.stderr.trim() || 'SQLite command failed.');
   }
-};
-
-const executeInsertAndGetId = (sql, params = []) => {
-  const formattedSql = formatSql(sql, params);
-  const wrappedSql = `BEGIN; ${formattedSql}; SELECT last_insert_rowid() AS id; COMMIT;`;
-  const result = spawnSync('sqlite3', ['-json', databasePath, wrappedSql], { encoding: 'utf8' });
-
-  if (result.status !== 0) {
-    throw new Error(result.stderr.trim() || 'SQLite insert failed.');
-  }
-
-  const trimmedOutput = result.stdout.trim();
-  if (!trimmedOutput) {
-    throw new Error('Failed to retrieve inserted row id.');
-  }
-
-  const [row] = JSON.parse(trimmedOutput);
-  return row ? row.id : null;
 };
 
 const query = (sql, params = []) => {
@@ -986,8 +963,20 @@ const buildWalkResponse = (row) => {
   }
 
   const routeDetails = row.routeId ? getRouteById(row.routeId) : null;
-  const buddyLatitude = row.buddyLatitude !== null && row.buddyLatitude !== undefined ? row.buddyLatitude : row.startLatitude;
-  const buddyLongitude = row.buddyLongitude !== null && row.buddyLongitude !== undefined ? row.buddyLongitude : row.startLongitude;
+  const buddyLatitude = row.buddyLatitude ?? row.startLatitude;
+  const buddyLongitude = row.buddyLongitude ?? row.startLongitude;
+
+  const route = {
+    startCoords: [row.startLatitude, row.startLongitude],
+    endCoords: [row.endLatitude, row.endLongitude],
+    buddyCurrentCoords: [buddyLatitude, buddyLongitude],
+  };
+
+  if (routeDetails) {
+    route.pathCoordinates = routeDetails.pathCoordinates;
+    route.steps = routeDetails.steps;
+    route.summary = routeDetails.summary;
+  }
 
   return {
     id: row.id,
@@ -998,14 +987,7 @@ const buildWalkResponse = (row) => {
     status: row.status,
     buddyId: row.buddyId,
     eta: row.eta || (routeDetails ? routeDetails.eta : null),
-    route: {
-      startCoords: [row.startLatitude, row.startLongitude],
-      endCoords: [row.endLatitude, row.endLongitude],
-      buddyCurrentCoords: [buddyLatitude, buddyLongitude],
-      pathCoordinates: routeDetails ? routeDetails.pathCoordinates : undefined,
-      steps: routeDetails ? routeDetails.steps : undefined,
-      summary: routeDetails ? routeDetails.summary : undefined,
-    },
+    route,
   };
 };
 
@@ -1130,6 +1112,18 @@ const getAllLocations = () => {
   return query('SELECT id, name, latitude, longitude FROM locations ORDER BY name ASC');
 };
 
+const MESSAGE_SELECT = `
+  SELECT
+    m.id,
+    m.message,
+    m.created_at AS createdAt,
+    start.name AS startLocation,
+    destination.name AS destination
+  FROM messages m
+  LEFT JOIN locations start ON start.id = m.start_location_id
+  LEFT JOIN locations destination ON destination.id = m.end_location_id
+`;
+
 const saveMessage = ({ message, startLocationName, destinationLocationName }) => {
   if (!message || !message.trim()) {
     throw new ValidationError('Message content is required.');
@@ -1158,34 +1152,29 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
     ]
   );
 
-  return querySingle(
-    `SELECT
-       m.id,
-       m.message,
-       m.created_at AS createdAt,
-       start.name AS startLocation,
-       destination.name AS destination
-     FROM messages m
-     LEFT JOIN locations start ON start.id = m.start_location_id
-     LEFT JOIN locations destination ON destination.id = m.end_location_id
-     WHERE m.id = ?`,
-    [insertedMessage.id]
-  );
+  return querySingle(`${MESSAGE_SELECT} WHERE m.id = ?`, [insertedMessage.id]);
 };
 
 const getMessages = () => {
-  return query(`
-    SELECT
-      m.id,
-      m.message,
-      m.created_at AS createdAt,
-      start.name AS startLocation,
-      destination.name AS destination
-    FROM messages m
-    LEFT JOIN locations start ON start.id = m.start_location_id
-    LEFT JOIN locations destination ON destination.id = m.end_location_id
-    ORDER BY m.created_at DESC
-  `);
+  return query(`${MESSAGE_SELECT} ORDER BY m.created_at DESC`);
+};
+
+const getRandomMessage = ({ startLocationName, destinationLocationName } = {}) => {
+  const conditions = [];
+  const params = [];
+
+  if (startLocationName) {
+    conditions.push('start.name = ?');
+    params.push(startLocationName);
+  }
+
+  if (destinationLocationName) {
+    conditions.push('destination.name = ?');
+    params.push(destinationLocationName);
+  }
+
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  return querySingle(`${MESSAGE_SELECT} ${whereClause} ORDER BY RANDOM() LIMIT 1`, params);
 };
 
 const recordWalkCompletion = ({ startLocationName, destinationLocationName }) => {
@@ -1256,6 +1245,7 @@ module.exports = {
   getAllRoutes,
   saveMessage,
   getMessages,
+  getRandomMessage,
   recordWalkCompletion,
   getWalksTodayCount,
   getMessagesCount,

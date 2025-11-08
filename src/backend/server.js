@@ -17,6 +17,7 @@ const {
     getAllRoutes,
     saveMessage,
     getMessages,
+    getRandomMessage,
     recordWalkCompletion,
     getWalksTodayCount,
     getMessagesCount,
@@ -337,28 +338,18 @@ const createApp = () => {
     // Return ONE random message, optionally filtered by start/destination (names)
     app.get('/api/messages/random', (req, res) => {
         try {
-          const start = getOptionalString(req.query.start);
-          const destination = getOptionalString(req.query.destination);
-          const all = getMessages();
+            const startLocationName = getOptionalString(req.query.start);
+            const destinationLocationName = getOptionalString(req.query.destination);
 
-          const filtered = all.filter((message) =>
-            (start ? message.startLocation === start : true) &&
-            (destination ? message.destination === destination : true)
-          );
-
-          if (filtered.length === 0) {
-            return res.json(null);
-          }
-
-          const pick = filtered[Math.floor(Math.random() * filtered.length)];
-          return res.json(pick);
+            const message = getRandomMessage({ startLocationName, destinationLocationName });
+            return res.json(message ?? null);
         } catch (error) {
-          return handleError(res, error, {
-            logMessage: 'Failed to get random message:',
-            responseMessage: 'Unable to load a random message.',
-          });
+            return handleError(res, error, {
+                logMessage: 'Failed to get random message:',
+                responseMessage: 'Unable to load a random message.',
+            });
         }
-      });
+    });
 
     return app;
 };
