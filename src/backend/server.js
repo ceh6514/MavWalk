@@ -22,6 +22,8 @@ const {
     getMessagesCount,
 } = require('./db');
 
+const { sanitizeMessageContent } = require('./message-filter');
+
 const {
     getRequiredString,
     parsePositiveInteger,
@@ -313,11 +315,12 @@ const createApp = () => {
     app.post('/api/messages', (req, res) => {
         try {
             const message = getRequiredString(req.body?.message, 'message');
+            const sanitizedMessage = sanitizeMessageContent(message);
             const startLocation = getOptionalString(req.body?.startLocation);
             const destination = getOptionalString(req.body?.destination);
 
             const savedMessage = saveMessage({
-                message,
+                message: sanitizedMessage,
                 startLocationName: startLocation,
                 destinationLocationName: destination,
             });
