@@ -35,6 +35,7 @@ const defaultMarkerIcon = L.icon({
 L.Marker.prototype.options.icon = defaultMarkerIcon;
 
 const defaultCenter = [32.7318, -97.1133];
+const MESSAGE_MAX_LENGTH = 280;
 
 const App = () => {
   const [startLocation, setStartLocation] = useState('');
@@ -808,6 +809,7 @@ const App = () => {
                   onChange={(event) => setUserMessage(event.target.value)}
                   disabled={hasSubmittedMessage}
                   rows={4}
+                  maxLength={MESSAGE_MAX_LENGTH}
                   placeholder={
                     hasSubmittedMessage
                       ? 'You already left a note for this walk. Tap Finish to head back to the start.'
@@ -819,6 +821,11 @@ const App = () => {
                       : 'border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:ring-blue-200'
                   }`}
                 />
+                {!hasSubmittedMessage && (
+                  <p className="text-sm text-gray-500">
+                    {userMessage.length}/{MESSAGE_MAX_LENGTH} characters (max)
+                  </p>
+                )}
 
                 {submissionStatus && (
                   <div

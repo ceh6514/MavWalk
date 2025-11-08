@@ -9,6 +9,8 @@ class ValidationError extends Error {
   }
 }
 
+const MESSAGE_MAX_LENGTH = 280;
+
 const dataDirectory = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDirectory)) {
   fs.mkdirSync(dataDirectory, { recursive: true });
@@ -1129,6 +1131,12 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
     throw new ValidationError('Message content is required.');
   }
 
+  const trimmedMessage = message.trim();
+
+  if (trimmedMessage.length > MESSAGE_MAX_LENGTH) {
+    throw new ValidationError(`Message content must be ${MESSAGE_MAX_LENGTH} characters or fewer.`);
+  }
+
   const startLocation = getLocationByName(startLocationName);
   const destinationLocation = getLocationByName(destinationLocationName);
   const route = startLocation && destinationLocation
@@ -1139,7 +1147,7 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
     `INSERT INTO messages (message, route_id, start_location_id, end_location_id)
      VALUES (?, ?, ?, ?) RETURNING id` ,
     [
-      message.trim(),
+      trimmedMessage,
       route ? route.id : null,
       startLocation ? startLocation.id : null,
       destinationLocation ? destinationLocation.id : null,
