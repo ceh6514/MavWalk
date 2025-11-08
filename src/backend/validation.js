@@ -1,4 +1,4 @@
-const { ValidationError } = require('./db');
+const { ValidationError } = require('./errors');
 
 const getRequiredString = (value, fieldName) => {
   if (typeof value !== 'string') {

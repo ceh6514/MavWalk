@@ -1,4 +1,4 @@
-const { ValidationError } = require('./db');
+const { ValidationError } = require('./errors');
 
 const leetMap = new Map([
   ['0', 'o'],
