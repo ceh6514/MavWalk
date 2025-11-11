@@ -13,6 +13,7 @@ const {
   normalizeMessage,
   matchesWithWildcards,
   containsWildcardMatch,
+  squashRepeatedCharacters,
 } = __test__;
 
 test('sanitizeMessageContent trims and collapses whitespace', () => {
@@ -46,6 +47,11 @@ test('containsProhibitedContent handles repeated characters gracefully', () => {
   assert.equal(containsProhibitedContent('Nooo wayyy friend'), false);
 });
 
+test('containsProhibitedContent rejects profanity with repeated characters', () => {
+  assert.equal(containsProhibitedContent('Get out you fuuuck!'), true);
+  assert.equal(containsProhibitedContent('Stop being shiiiitty'), true);
+});
+
 test('tokenize normalizes characters and wildcards', () => {
   assert.deepEqual(tokenize('F!!!u***cK'), ['fiiu??ck']);
 });
@@ -62,4 +68,9 @@ test('matchesWithWildcards treats question marks as wildcards', () => {
 test('containsWildcardMatch scans entire string for wildcard matches', () => {
   assert.equal(containsWildcardMatch('friendlyf??kvibes', 'fuck'), true);
   assert.equal(containsWildcardMatch('upliftingwords', 'fuck'), false);
+});
+
+test('squashRepeatedCharacters collapses repeated runs to single characters', () => {
+  assert.equal(squashRepeatedCharacters('heeellooo'), 'helo');
+  assert.equal(squashRepeatedCharacters('no???way!!'), 'no?way!');
 });

@@ -82,6 +82,8 @@ const normalizeMessage = (message) =>
 
 const collapseRepeatedCharacters = (token) => token.replace(/(.)\1{2,}/g, '$1$1');
 
+const squashRepeatedCharacters = (token) => token.replace(/(.)\1+/g, '$1');
+
 const tokenize = (message) =>
   normalizeMessage(message)
     .split(/\s+/)
@@ -130,10 +132,22 @@ const containsProhibitedContent = (message) => {
   }
 
   const condensed = tokens.join('');
+  const condensedSquashed = squashRepeatedCharacters(condensed);
 
   return bannedMatchers.some((word) =>
-    tokens.some((token) => token === word || matchesWithWildcards(token, word))
+    tokens.some((token) => {
+      if (token === word || matchesWithWildcards(token, word)) {
+        return true;
+      }
+
+      const squashedToken = squashRepeatedCharacters(token);
+      return (
+        squashedToken === word
+        || matchesWithWildcards(squashedToken, word)
+      );
+    })
     || containsWildcardMatch(condensed, word)
+    || containsWildcardMatch(condensedSquashed, word)
   );
 };
 
@@ -164,5 +178,6 @@ module.exports = {
     collapseRepeatedCharacters,
     matchesWithWildcards,
     containsWildcardMatch,
+    squashRepeatedCharacters,
   },
 };
