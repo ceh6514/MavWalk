@@ -1,65 +1,47 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { ValidationError } = require('../../src/backend/db');
-const {
-  sanitizeMessageContent,
-  containsProhibitedContent,
-  __test__,
-} = require('../../src/backend/message-filter');
+const { ValidationError } = require('../../src/backend/errors');
+const { sanitizeMessageContent } = require('../../src/backend/message-filter');
+const { configureProfanityLibrary } = require('../../src/backend/profanity');
+const { createMockProfanityLibrary } = require('../helpers/mock-profanity-lib');
 
-const {
-  tokenize,
-  normalizeMessage,
-  matchesWithWildcards,
-  containsWildcardMatch,
-} = __test__;
+const setupProfanity = (options) => {
+  const library = createMockProfanityLibrary(options);
+  configureProfanityLibrary(library, { extraTerms: ['maskedterm'] });
+};
 
 test('sanitizeMessageContent trims and collapses whitespace', () => {
+  setupProfanity();
   const input = '  You are amazing!  Keep shining.  ';
   const sanitized = sanitizeMessageContent(input);
   assert.equal(sanitized, 'You are amazing! Keep shining.');
 });
 
-test('sanitizeMessageContent rejects obvious profanity', () => {
+test('sanitizeMessageContent masks configured terms', () => {
+  setupProfanity();
+  const sanitized = sanitizeMessageContent('Sharing maskedterm energy');
+  assert.equal(sanitized, 'Sharing [masked] energy');
+});
+
+test('sanitizeMessageContent falls back to generic mask if library cannot replace term', () => {
+  setupProfanity({ maskWithReplacement: false });
+  const sanitized = sanitizeMessageContent('Maskedterm magic');
+  assert.equal(sanitized, '[masked]');
+});
+
+test('sanitizeMessageContent rejects non-string values', () => {
+  setupProfanity();
   assert.throws(
-    () => sanitizeMessageContent('This is a FUCK!'),
-    (error) => error instanceof ValidationError && /inappropriate/.test(error.message)
+    () => sanitizeMessageContent(42),
+    (error) => error instanceof ValidationError && /Message must be a string/.test(error.message)
   );
 });
 
-test('sanitizeMessageContent rejects obfuscated profanity with spacing and punctuation', () => {
+test('sanitizeMessageContent rejects empty messages', () => {
+  setupProfanity();
   assert.throws(
-    () => sanitizeMessageContent('Friendly f * * k vibes'),
-    (error) => error instanceof ValidationError
+    () => sanitizeMessageContent('   '),
+    (error) => error instanceof ValidationError && /required/.test(error.message)
   );
-});
-
-test('sanitizeMessageContent rejects leetspeak profanity', () => {
-  assert.throws(
-    () => sanitizeMessageContent('Have a gr34t d4y you sh1t'),
-    (error) => error instanceof ValidationError
-  );
-});
-
-test('containsProhibitedContent handles repeated characters gracefully', () => {
-  assert.equal(containsProhibitedContent('Nooo wayyy friend'), false);
-});
-
-test('tokenize normalizes characters and wildcards', () => {
-  assert.deepEqual(tokenize('F!!!u***cK'), ['fiiu??ck']);
-});
-
-test('normalizeMessage converts special characters into analysis form', () => {
-  assert.equal(normalizeMessage('b @ d### word'), 'b a d??? word');
-});
-
-test('matchesWithWildcards treats question marks as wildcards', () => {
-  assert.equal(matchesWithWildcards('f??k', 'fuck'), true);
-  assert.equal(matchesWithWildcards('snw?', 'snow'), false);
-});
-
-test('containsWildcardMatch scans entire string for wildcard matches', () => {
-  assert.equal(containsWildcardMatch('friendlyf??kvibes', 'fuck'), true);
-  assert.equal(containsWildcardMatch('upliftingwords', 'fuck'), false);
 });
