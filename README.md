@@ -48,6 +48,12 @@ MavWalk is a website curated for University of Texas at Arlington students to en
 - If you prefer a single terminal, use a multiplexer like tmux, or run one process in the background.
 - Ensure the backend is up before interacting with the frontend to avoid API errors.
 
+## Content Moderation Policy
+- We rely on a third-party library; we do not curate or store word lists.
+- Text submitted by users is normalized (Unicode NFKC, lowercase, diacritic stripping, simple leetspeak folding, and repeat collapsing) before being classified.
+- Server middleware masks profane input on write requests and logs only the category code and action taken.
+- Additional runtime terms can be supplied via the `EXTRA_PROFANITY` environment variable without touching source control.
+
 ## Summary
 - Backend: `cd src/backend && npm install && npm start`
 - Frontend: `cd src/frontend && npm install && npm run dev`

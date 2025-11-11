@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "leo-profanity": "^1.7.0"
   }
 }

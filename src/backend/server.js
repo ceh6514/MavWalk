@@ -31,6 +31,7 @@ const {
     getOptionalString,
     handleError,
 } = require('./validation');
+const { createProfanityMiddleware } = require('./middleware/profanity-middleware');
 
 const port = 3001;
 
@@ -50,6 +51,12 @@ const createApp = () => {
 
     app.use(cors());
     app.use(express.json());
+
+    const messageProfanityGuard = createProfanityMiddleware({
+        logger: ({ category, action }) => {
+            console.info('profanity_policy', { category, action });
+        },
+    });
 
     //API Endpoints
 
@@ -313,7 +320,7 @@ const createApp = () => {
         }
     });
 
-    app.post('/api/messages', (req, res) => {
+    app.post('/api/messages', messageProfanityGuard, (req, res) => {
         try {
             const message = getRequiredString(req.body?.message, 'message');
             const sanitizedMessage = sanitizeMessageContent(message);
