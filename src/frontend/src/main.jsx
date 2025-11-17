@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet';
+import { LayersControl, MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -54,6 +54,43 @@ const App = () => {
   const [stats, setStats] = useState({ walksToday: null, messagesShared: null });
   const [completionStatus, setCompletionStatus] = useState(null);
   const [isRecordingCompletion, setIsRecordingCompletion] = useState(false);
+
+  const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+  const tileLayers = useMemo(() => {
+    const layers = {
+      street: {
+        id: 'street',
+        label: 'Street',
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      },
+      satellite: {
+        id: 'satellite',
+        label: 'Satellite',
+        attribution:
+          'Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics, and the GIS User Community',
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      },
+    };
+
+    if (mapboxAccessToken) {
+      layers.satellite = {
+        id: 'satellite',
+        label: 'Satellite',
+        attribution:
+          'Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a> & contributors, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        url: `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}?access_token=${mapboxAccessToken}`,
+      };
+    }
+
+    return layers;
+  }, [mapboxAccessToken]);
+  const [activeLayer, setActiveLayer] = useState(() => tileLayers.street);
+
+  useEffect(() => {
+    setActiveLayer((currentLayer) => tileLayers[currentLayer?.id] || tileLayers.street);
+  }, [tileLayers]);
 
   // Map/location state
   const [userLocation, setUserLocation] = useState(null);
@@ -720,59 +757,89 @@ const App = () => {
             <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
               {renderHeader('Follow the highlighted path to reach your destination!')}
 
-              <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 space-y-3">
-                <p className="text-base font-semibold text-gray-800">{routeResult.summary}</p>
-                {routeResult.steps && (
-                  <ol className="list-decimal list-inside space-y-2 text-base text-gray-600">
-                    {routeResult.steps.map((step, index) => (
-                      <li key={`route-step-${index}`}>{step}</li>
-                    ))}
-                  </ol>
-                )}
-                {locationStatus && (
-                  <div
-                    className={`rounded-lg border px-3 py-2 text-base font-medium ${
-                      locationStatus.type === 'error'
-                        ? 'border-red-200 bg-red-50 text-red-700'
-                        : 'border-blue-200 bg-blue-50 text-blue-700'
-                    }`}
-                  >
-                    {locationStatus.message}
-                  </div>
-                )}
-              </div>
-
-              <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-lg">
-                <MapContainer
-                  center={mapCenter}
-                  zoom={17}
-                  style={{ height: '320px', width: '100%' }}
-                  key={`${routeResult.startCoordinates}-${routeResult.destinationCoordinates}`}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  <Marker position={routeResult.startCoordinates}>
-                    <Tooltip direction="top" offset={[0, -20]} permanent>
-                      {startLocation}
-                    </Tooltip>
-                  </Marker>
-                  <Marker position={routeResult.destinationCoordinates}>
-                    <Tooltip direction="top" offset={[0, -20]} permanent>
-                      {destination}
-                    </Tooltip>
-                  </Marker>
-                  {userLocation && (
-                    <Marker position={userLocation}>
-                      <Tooltip direction="top" offset={[0, -20]} permanent>
-                        You are here
-                      </Tooltip>
-                    </Marker>
+                <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 space-y-3">
+                  <p className="text-base font-semibold text-gray-800">{routeResult.summary}</p>
+                  {routeResult.steps && (
+                    <ol className="list-decimal list-inside space-y-2 text-base text-gray-600">
+                      {routeResult.steps.map((step, index) => (
+                        <li key={`route-step-${index}`}>{step}</li>
+                      ))}
+                    </ol>
                   )}
-                  <Polyline positions={routeResult.pathCoordinates} color="#f97316" weight={4} dashArray="8 12" />
-                </MapContainer>
-              </div>
+                  {locationStatus && (
+                    <div
+                      className={`rounded-lg border px-3 py-2 text-base font-medium ${
+                        locationStatus.type === 'error'
+                          ? 'border-red-200 bg-red-50 text-red-700'
+                          : 'border-blue-200 bg-blue-50 text-blue-700'
+                      }`}
+                    >
+                      {locationStatus.message}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+                    <span className="text-sm font-semibold text-gray-700">Map view</span>
+                    <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                      {Object.values(tileLayers).map((layer) => {
+                        const isActiveLayer = activeLayer.id === layer.id;
+                        return (
+                          <button
+                            key={`layer-toggle-${layer.id}`}
+                            type="button"
+                            onClick={() => setActiveLayer(layer)}
+                            className={`px-3 py-1.5 text-sm font-semibold transition ${
+                              isActiveLayer
+                                ? 'bg-blue-600 text-white shadow-inner'
+                                : 'text-gray-600 hover:bg-white hover:text-blue-600'
+                            }`}
+                            aria-pressed={isActiveLayer}
+                          >
+                            {layer.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-lg">
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={17}
+                    style={{ height: '320px', width: '100%' }}
+                    key={`${routeResult.startCoordinates}-${routeResult.destinationCoordinates}`}
+                  >
+                    <TileLayer attribution={activeLayer.attribution} url={activeLayer.url} />
+                    <LayersControl position="topright" collapsed>
+                      <LayersControl.Overlay checked name="Guided path">
+                        <Polyline positions={routeResult.pathCoordinates} color="#f97316" weight={4} dashArray="8 12" />
+                      </LayersControl.Overlay>
+                      <LayersControl.Overlay checked name="Start & Destination">
+                        <>
+                          <Marker position={routeResult.startCoordinates}>
+                            <Tooltip direction="top" offset={[0, -20]} permanent>
+                              {startLocation}
+                            </Tooltip>
+                          </Marker>
+                          <Marker position={routeResult.destinationCoordinates}>
+                            <Tooltip direction="top" offset={[0, -20]} permanent>
+                              {destination}
+                            </Tooltip>
+                          </Marker>
+                        </>
+                      </LayersControl.Overlay>
+                      {userLocation && (
+                        <LayersControl.Overlay checked name="Your location">
+                          <Marker position={userLocation}>
+                            <Tooltip direction="top" offset={[0, -20]} permanent>
+                              You are here
+                            </Tooltip>
+                          </Marker>
+                        </LayersControl.Overlay>
+                      )}
+                    </LayersControl>
+                  </MapContainer>
+                </div>
 
               {completionStatus && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-base text-red-700">
