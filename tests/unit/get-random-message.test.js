@@ -16,6 +16,7 @@ test('getRandomMessage returns a message matching the provided filters', () => {
     message: messageText,
     startLocationName: 'Fine Arts Building',
     destinationLocationName: 'Arlington Hall',
+    status: 'approved',
   });
 
   const result = getRandomMessage({

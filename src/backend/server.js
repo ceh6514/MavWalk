@@ -18,6 +18,8 @@ const {
     saveMessage,
     getMessages,
     getRandomMessage,
+    getModerationMessages,
+    updateMessageStatus,
     recordWalkCompletion,
     getWalksTodayCount,
     getMessagesCount,
@@ -331,6 +333,8 @@ const createApp = () => {
                 message: sanitizedMessage,
                 startLocationName: startLocation,
                 destinationLocationName: destination,
+                status: 'pending',
+                profanityCategory: req.profanityReview?.category,
             });
 
             res.status(201).json(savedMessage);
@@ -354,6 +358,66 @@ const createApp = () => {
             return handleError(res, error, {
                 logMessage: 'Failed to get random message:',
                 responseMessage: 'Unable to load a random message.',
+            });
+        }
+    });
+
+    app.get('/api/moderation/messages', (req, res) => {
+        try {
+            const status = getOptionalString(req.query.status) ?? 'pending';
+            const startLocationName = getOptionalString(req.query.start);
+            const destinationLocationName = getOptionalString(req.query.destination);
+
+            const messages = getModerationMessages({ status, startLocationName, destinationLocationName });
+            res.json(messages);
+        } catch (error) {
+            return handleError(res, error, {
+                logMessage: 'Failed to load moderation queue:',
+                responseMessage: 'Unable to load moderation queue.',
+            });
+        }
+    });
+
+    app.post('/api/moderation/messages/:id/approve', (req, res) => {
+        try {
+            const messageId = parsePositiveInteger(req.params.id, 'message id');
+            const reviewedBy = getOptionalString(req.body?.reviewedBy);
+            const reviewNotes = getOptionalString(req.body?.reviewNotes);
+
+            const updatedMessage = updateMessageStatus({
+                messageId,
+                status: 'approved',
+                reviewedBy,
+                reviewNotes,
+            });
+
+            res.json({ message: 'Message approved.', record: updatedMessage });
+        } catch (error) {
+            return handleError(res, error, {
+                logMessage: 'Failed to approve message:',
+                responseMessage: 'Unable to approve message.',
+            });
+        }
+    });
+
+    app.post('/api/moderation/messages/:id/reject', (req, res) => {
+        try {
+            const messageId = parsePositiveInteger(req.params.id, 'message id');
+            const reviewedBy = getOptionalString(req.body?.reviewedBy);
+            const reviewNotes = getOptionalString(req.body?.reviewNotes);
+
+            const updatedMessage = updateMessageStatus({
+                messageId,
+                status: 'rejected',
+                reviewedBy,
+                reviewNotes,
+            });
+
+            res.json({ message: 'Message rejected.', record: updatedMessage });
+        } catch (error) {
+            return handleError(res, error, {
+                logMessage: 'Failed to reject message:',
+                responseMessage: 'Unable to reject message.',
             });
         }
     });
