@@ -27,6 +27,13 @@ MavWalk is a website curated for University of Texas at Arlington students to en
    ```
    The backend listens on `http://localhost:3001` by default.
 
+### Backend environment variables
+- `PORT`: Overrides the listen port (Cloud Run injects this; defaults to `3001` locally).
+- `DB_DIR`: Directory that will hold the SQLite database file (defaults to `./data` inside the backend working directory).
+- `DB_PATH`: Explicit SQLite file path (overrides `DB_DIR` when provided).
+
+For local development, you do not need to set any of these—the CLI utilities and Express server will continue to use `./data/mavwalk.db` automatically.
+
 ## Frontend Setup (`src/frontend`)
 1. Open a second terminal (or tab) and move into the frontend directory:
    ```bash
@@ -40,8 +47,10 @@ MavWalk is a website curated for University of Texas at Arlington students to en
    ```bash
    npm run dev
    ```
-   Vite prints a local development URL, which is usually http://localhost:5173. 
+   Vite prints a local development URL, which is usually http://localhost:5173.
    Open it in your browser.
+
+For production builds, set `VITE_API_BASE_URL` to the deployed backend URL (for example, the Cloud Run HTTPS endpoint). During local development you can leave it unset to continue using the Vite dev proxy or fall back to `http://localhost:3001` when building statically.
 
 ## Running Both Servers Together
 - Keep the backend running in the first terminal and the frontend running in the second terminal.

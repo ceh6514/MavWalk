@@ -1,40 +1,7 @@
-const rawEnvBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-
-function normaliseBaseUrl(urlString) {
-  if (!urlString) return '';
-
-  try {
-    const url = new URL(urlString, window.location.origin);
-
-    if (['localhost', '127.0.0.1'].includes(url.hostname)) {
-      url.hostname = window.location.hostname;
-    }
-
-    return url.origin + (url.pathname === '/' ? '' : url.pathname.replace(/\/$/, ''));
-  } catch (error) {
-    console.warn(`Invalid VITE_API_BASE_URL provided ("${urlString}"). Falling back to defaults.`, error);
-    return '';
-  }
-}
-
-function computeBaseUrl() {
-  // 1) If an explicit env base URL is provided, respect it
-  const normalised = normaliseBaseUrl(rawEnvBaseUrl);
-  if (normalised) return normalised;
-
-  // 2) In dev, prefer Vite proxy: same-origin '' so fetch('/api/...') works
-  if (typeof window !== 'undefined' && import.meta.env.DEV) {
-    return '';
-  }
-
-  // 3) In production builds, default to same-origin
-  return '';
-}
-
-const BASE_URL = computeBaseUrl();
+import { apiUrl } from './api/client';
 
 async function request(path, opts = {}) {
-  const url = `${BASE_URL}${path}`;
+  const url = apiUrl(path);
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
     method: opts.method || 'GET',

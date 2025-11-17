@@ -8,3 +8,5 @@ It can only go from the Central Library to the Mavericks Activity Center. The MA
 Will need to adjust the coords and provide more routes if possible.
 Also, the route's directions are super incorrect, so need to fix that up to.
 The UI text seems to be a little messed up too.
+
+When deploying, set `VITE_API_BASE_URL` to the Cloud Run URL of the backend; during local development you can leave it unset and rely on the Vite dev proxy or the default `http://localhost:3001` fallback.
