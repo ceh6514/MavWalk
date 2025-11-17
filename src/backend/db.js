@@ -465,100 +465,70 @@ const routeMessageSeedData = [
     start: 'Central Library',
     destination: 'Maverick Activities Center',
     messages: [
-      'Take a refreshing walk from the library to the MAC—let the breeze recharge you.',
-      'You deserve this break between study sessions and the MAC—enjoy every step.',
-      'Let the sunshine guide you from Central Library to the MAC with confidence.',
-      'Feel your energy lift as you head from the library toward the MAC.',
+      'Take a refreshing walk from the library to the MAC—let the breeze recharge you.'
     ],
   },
   {
     start: 'Central Library',
     destination: 'Science & Engineering Innovation & Research Building',
     messages: [
-      'Take a mindful breather on the short walk from Central Library to SEIR.',
-      'Let curiosity lead the way from the library to SEIR—great ideas await.',
-      'Enjoy the calm path to SEIR and arrive ready to explore something new.',
-      'A quick walk to SEIR is the perfect reset—enjoy the view as you go.',
+      'Take a mindful breather on the short walk from Central Library to SEIR.'
     ],
   },
   {
     start: 'Central Library',
     destination: 'Science Hall',
     messages: [
-      'Stroll to Science Hall with a smile—fresh air fuels fresh thinking.',
-      'Enjoy the gentle walk from Central Library to Science Hall—you are doing great.',
-      'Let the tree-lined path to Science Hall brighten your day.',
-      'Science Hall is just ahead—take these moments to breathe and unwind.',
+      'Stroll to Science Hall with a smile—fresh air fuels fresh thinking.'
     ],
   },
   {
     start: 'Science & Engineering Innovation & Research Building',
     destination: 'Nedderman Hall',
     messages: [
-      'Enjoy the breeze as you head from SEIR to Nedderman Hall—steady and calm.',
-      'Take a peaceful pause on the way to Nedderman Hall—you\'ve earned it.',
-      'Let each step from SEIR to Nedderman Hall fill you with confidence.',
-      'Celebrate your progress with a relaxed stroll over to Nedderman Hall.',
+      'Enjoy the breeze as you head from SEIR to Nedderman Hall—steady and calm.'
     ],
   },
   {
     start: 'Maverick Activities Center',
     destination: 'University Center',
     messages: [
-      'Ease into a calm pace as you walk from the MAC to the UC.',
-      'Let the path to the UC be your gentle cooldown—you\'re doing amazing.',
-      'Feel the campus energy cheering you on from the MAC to the UC.',
-      'Enjoy the transition from workout to hangout as you head toward the UC.',
+      'Ease into a calm pace as you walk from the MAC to the UC.'
     ],
   },
   {
     start: 'University Center',
     destination: 'College Park Center',
     messages: [
-      'Bring the lively UC energy with you as you head to College Park Center.',
-      'Enjoy the buzz of campus life along the UC to CPC path.',
-      'Each step toward College Park Center is a celebration—enjoy it.',
-      'Smile as you walk from the UC to CPC—great moments are ahead.',
+      'Bring the lively UC energy with you as you head to College Park Center.'
     ],
   },
   {
     start: 'College Park Center',
     destination: 'Science Hall',
     messages: [
-      'Savor the calm walk from College Park Center to Science Hall.',
-      'Let the route from CPC to Science Hall help you reset and refocus.',
-      'Enjoy the peaceful steps toward Science Hall—you’ve got this.',
-      'Feel the campus settle around you as you stroll from CPC to Science Hall.',
+      'Savor the calm walk from College Park Center to Science Hall.'
     ],
   },
   {
     start: 'Engineering Research Building',
     destination: 'Fine Arts Building',
     messages: [
-      'Shift from engineering mode to creative mode on the walk to Fine Arts.',
-      'Enjoy the blend of ideas as you head from ERB to the Fine Arts Building.',
-      'Let inspiration guide your steps from ERB to Fine Arts.',
-      'Celebrate your talents with a relaxed stroll toward the Fine Arts Building.',
+      'Shift from engineering mode to creative mode on the walk to Fine Arts.'
     ],
   },
   {
     start: 'Fine Arts Building',
     destination: 'Business Building',
     messages: [
-      'Carry your creative spark from Fine Arts over to the Business Building.',
-      'Let fresh ideas accompany you on the walk to the Business Building.',
-      'Enjoy the change of scenery as you head toward the Business Building.',
-      'Feel confident and calm as you stroll from Fine Arts to the Business Building.',
+      'Carry your creative spark from Fine Arts over to the Business Building.'
     ],
   },
   {
     start: 'Arlington Hall',
     destination: 'Central Library',
     messages: [
-      'Enjoy a peaceful stroll from Arlington Hall to Central Library.',
-      'Let the walk to the library center your thoughts and set the tone for success.',
-      'Feel supported by campus as you head from Arlington Hall to Central Library.',
-      'Take this time walking to the library to breathe and smile—you’re doing great.',
+      'Enjoy a peaceful stroll from Arlington Hall to Central Library.'
     ],
   },
 ];
