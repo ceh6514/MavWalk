@@ -26,6 +26,7 @@ const {
 } = require('./db');
 
 const { sanitizeMessageContent } = require('./message-filter');
+const { ValidationError } = require('./errors');
 
 const {
     getRequiredString,
@@ -44,6 +45,32 @@ const ensureDatabaseInitialized = () => {
         initializeDatabase();
         databaseInitialized = true;
     }
+};
+
+const parseExcludeMessageIds = (value) => {
+    if (value === undefined || value === null) {
+        return [];
+    }
+
+    const rawValues = Array.isArray(value) ? value : [value];
+    const ids = new Set();
+
+    for (const raw of rawValues) {
+        const segments = String(raw)
+            .split(',')
+            .map((segment) => segment.trim())
+            .filter(Boolean);
+
+        for (const segment of segments) {
+            const numericValue = Number(segment);
+            if (!Number.isInteger(numericValue) || numericValue < 1) {
+                throw new ValidationError('exclude must be a comma-separated list of positive integers.');
+            }
+            ids.add(numericValue);
+        }
+    }
+
+    return Array.from(ids);
 };
 
 const createApp = () => {
@@ -351,8 +378,13 @@ const createApp = () => {
         try {
             const startLocationName = getOptionalString(req.query.start);
             const destinationLocationName = getOptionalString(req.query.destination);
+            const excludeMessageIds = parseExcludeMessageIds(req.query.exclude);
 
-            const message = getRandomMessage({ startLocationName, destinationLocationName });
+            const message =
+                getRandomMessage({ startLocationName, destinationLocationName, excludeMessageIds }) ||
+                (excludeMessageIds.length
+                    ? getRandomMessage({ startLocationName, destinationLocationName })
+                    : null);
             return res.json(message ?? null);
         } catch (error) {
             return handleError(res, error, {
