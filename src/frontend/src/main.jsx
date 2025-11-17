@@ -68,6 +68,7 @@ const App = () => {
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [hasSubmittedMessage, setHasSubmittedMessage] = useState(false);
   const [stats, setStats] = useState({ walksToday: null, messagesShared: null });
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [completionStatus, setCompletionStatus] = useState(null);
   const [isRecordingCompletion, setIsRecordingCompletion] = useState(false);
   const [activeMapLayer, setActiveMapLayer] = useState(mapLayerOptions.streets.id);
@@ -82,6 +83,12 @@ const App = () => {
   const [encouragement, setEncouragement] = useState(null);
   const [msgLoading, setMsgLoading] = useState(false);
   const [msgError, setMsgError] = useState(null);
+
+  useEffect(() => {
+    document.body.style.backgroundColor = isDarkMode ? '#020617' : '#e0f2ff';
+    document.body.style.color = isDarkMode ? '#f8fafc' : '#0f172a';
+    document.body.style.transition = 'background-color 300ms ease, color 300ms ease';
+  }, [isDarkMode]);
 
   useEffect(() => {
     setCompletionStatus(null);
@@ -455,17 +462,29 @@ const App = () => {
   };
   const renderHeader = (subtitle) => (
     <header className="text-center space-y-4">
-      <div className="mx-auto w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-lg p-3">
-        <img src={mavWalkLogo} alt="MavWalk Logo" className="w-full h-full object-contain" />
+      <div
+        className={`mx-auto w-32 h-32 rounded-3xl flex items-center justify-center shadow-[0_25px_60px_rgba(15,23,42,0.25)] ring-4 transition-all duration-500 ${
+          isDarkMode ? 'bg-slate-900 ring-slate-700' : 'bg-gradient-to-br from-blue-50 via-white to-orange-50 ring-orange-100'
+        }`}
+      >
+        <img src={mavWalkLogo} alt="MavWalk Logo" className="w-20 h-20 object-contain drop-shadow-xl" />
       </div>
 
       <div className="space-y-3">
-        <h1 className="text-5xl font-bold text-purple-600">MavWalk</h1>
-        <p className="text-gray-600 text-base">Navigate UTA campus with uplifting messages</p>
-        {subtitle && <p className="text-gray-500 text-base mt-2">{subtitle}</p>}
+        <h1 className={`text-5xl font-bold ${isDarkMode ? 'text-white' : 'text-purple-600'}`}>MavWalk</h1>
+        <p className={`text-base ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+          Navigate UTA campus with uplifting messages
+        </p>
+        {subtitle && (
+          <p className={`text-base mt-2 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>{subtitle}</p>
+        )}
       </div>
-      
-      <div className="flex items-center justify-center gap-8 text-base text-gray-500 pt-3">
+
+      <div
+        className={`flex items-center justify-center gap-8 text-base pt-3 ${
+          isDarkMode ? 'text-slate-400' : 'text-gray-500'
+        }`}
+      >
         <div className="flex items-center gap-2">
           <span className="text-lg">👥</span>
           <span>{`${formatStat(stats.walksToday)} walks today`}</span>
@@ -479,37 +498,65 @@ const App = () => {
   );
 
   return (
-    <div className="min-h-screen bg-blue-600 relative overflow-hidden">
+    <div
+      className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
+        isDarkMode ? 'bg-slate-950' : 'bg-blue-600'
+      }`}
+    >
       {/* UTA Logo pattern background */}
-      <div className="absolute inset-0 opacity-20">
+      <div className="absolute inset-0 pointer-events-none" style={{ opacity: isDarkMode ? 0.08 : 0.2 }}>
         <div
           className="absolute inset-0"
           style={{
             backgroundImage: `url(${utaLogo})`,
             backgroundSize: '200px 200px',
             backgroundRepeat: 'repeat',
-            backgroundPosition: 'center'
+            backgroundPosition: 'center',
+            mixBlendMode: isDarkMode ? 'screen' : 'normal',
           }}
         />
       </div>
 
       {/* Navigation Bar */}
-      <nav className="relative z-10 bg-blue-600 shadow-lg">
+      <nav
+        className={`relative z-10 shadow-lg transition-colors duration-500 ${
+          isDarkMode ? 'bg-slate-950/80 backdrop-blur' : 'bg-blue-600'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 flex items-center justify-center">
               <img src={mavWalkLogo} alt="MavWalk" className="w-full h-full object-contain" />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-white">MavWalk</span>
+              <span className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-white'}`}>MavWalk</span>
               <span className="bg-orange-500 text-white text-sm font-semibold px-2.5 py-1 rounded">BETA</span>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <button className="bg-green-500 text-white px-5 py-2.5 rounded-lg font-semibold text-base flex items-center gap-2 hover:bg-green-600 transition-colors">
+            <button
+              className={`px-5 py-2.5 rounded-lg font-semibold text-base flex items-center gap-2 transition-colors ${
+                isDarkMode ? 'bg-green-500/80 hover:bg-green-500 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+              }`}
+            >
               <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
               Live
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsDarkMode((prev) => !prev)}
+              aria-pressed={isDarkMode}
+              className={`px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-colors ${
+                isDarkMode
+                  ? 'bg-slate-800 text-slate-100 hover:bg-slate-700'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <span role="img" aria-hidden="true">
+                {isDarkMode ? '☀️' : '🌙'}
+              </span>
+              {isDarkMode ? 'Light Mode' : 'Night Mode'}
             </button>
           </div>
         </div>
@@ -517,7 +564,11 @@ const App = () => {
 
       {/* Hero Banner */}
       {stage === 'home' && (
-        <div className="relative z-10 bg-orange-500 text-white text-center py-4 px-6">
+        <div
+          className={`relative z-10 text-center py-4 px-6 transition-colors duration-500 ${
+            isDarkMode ? 'bg-slate-900/80 text-slate-100' : 'bg-orange-500 text-white'
+          }`}
+        >
           <p className="text-base font-medium">Live Demo: Experience MavWalk's campus navigation system</p>
         </div>
       )}
@@ -526,30 +577,55 @@ const App = () => {
       <div className="relative z-10 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-xl">
           {stage === 'home' && (
-            <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+            <div
+              className={`rounded-3xl shadow-2xl p-8 space-y-6 transition-colors duration-500 ${
+                isDarkMode ? 'bg-slate-900/80 border border-slate-800 text-slate-100 backdrop-blur' : 'bg-white text-gray-900'
+              }`}
+            >
               {renderHeader()}
 
               {/* Plan Your Journey Section */}
               <div className="pt-4">
-                <div className="border-2 border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
+                <div
+                  className={`border-2 rounded-2xl p-6 shadow-sm transition-colors duration-500 ${
+                    isDarkMode ? 'border-slate-800 bg-slate-950/60' : 'border-gray-200 bg-white'
+                  }`}
+                >
                   <div className="flex items-center gap-2 mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className={`w-6 h-6 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
-                    <h2 className="text-xl font-bold text-gray-800">Plan Your Journey</h2>
+                    <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Plan Your Journey</h2>
                   </div>
-                  <p className="text-base text-gray-600 mb-6">
+                  <p className={`text-base mb-6 ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
                     Get directions with encouraging messages along the way
                   </p>
 
                   {routesLoading && (
-                    <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-base text-blue-700">
+                    <div
+                      className={`mb-4 rounded-xl border px-4 py-3 text-base ${
+                        isDarkMode
+                          ? 'border-blue-900 bg-blue-950/60 text-blue-200'
+                          : 'border-blue-200 bg-blue-50 text-blue-700'
+                      }`}
+                    >
                       Loading curated Maverick routes...
                     </div>
                   )}
 
                   {routesError && (
-                    <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-base text-red-700">
+                    <div
+                      className={`mb-4 rounded-xl border px-4 py-3 text-base ${
+                        isDarkMode
+                          ? 'border-red-900 bg-red-950/60 text-red-200'
+                          : 'border-red-200 bg-red-50 text-red-700'
+                      }`}
+                    >
                       We hit a snag while loading campus routes. {routesError}
                     </div>
                   )}
@@ -557,7 +633,11 @@ const App = () => {
                   <form className="space-y-5" onSubmit={handleFindRoute}>
                     {/* Starting From */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                      <label
+                        className={`flex items-center gap-2 text-base font-semibold ${
+                          isDarkMode ? 'text-slate-100' : 'text-gray-700'
+                        }`}
+                      >
                         <span className="text-green-600 text-lg">📍</span>
                         Starting From
                       </label>
@@ -566,7 +646,11 @@ const App = () => {
                         value={startLocation}
                         onChange={(event) => setStartLocation(event.target.value)}
                         disabled={routesLoading && startOptions.length === 0}
-                        className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-4 text-base text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
+                        className={`w-full appearance-none rounded-xl px-4 py-4 text-base transition-all focus:outline-none focus:ring-2 ${
+                          isDarkMode
+                            ? 'border border-slate-700 bg-slate-900 text-slate-100 focus:border-orange-400 focus:ring-orange-400/30'
+                            : 'border border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:ring-blue-200'
+                        }`}
                       >
                         <option value="">
                           {routesLoading ? 'Loading curated routes…' : 'Enter starting location...'}
@@ -586,8 +670,12 @@ const App = () => {
                         disabled={routesLoading || (!startLocation && !destination)}
                         className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
                           routesLoading || (!startLocation && !destination)
-                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
+                            ? isDarkMode
+                              ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : isDarkMode
+                              ? 'bg-slate-800 hover:bg-slate-700 text-orange-200'
+                              : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
                         }`}
                         onClick={() => {
                           const temp = startLocation;
@@ -603,7 +691,11 @@ const App = () => {
 
                     {/* Destination */}
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                      <label
+                        className={`flex items-center gap-2 text-base font-semibold ${
+                          isDarkMode ? 'text-slate-100' : 'text-gray-700'
+                        }`}
+                      >
                         <span className="text-orange-600 text-lg">🎯</span>
                         Destination
                       </label>
@@ -612,7 +704,11 @@ const App = () => {
                         value={destination}
                         onChange={(event) => setDestination(event.target.value)}
                         disabled={routesLoading && destinationOptions.length === 0}
-                        className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-4 text-base text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all"
+                        className={`w-full appearance-none rounded-xl px-4 py-4 text-base transition-all focus:outline-none focus:ring-2 ${
+                          isDarkMode
+                            ? 'border border-slate-700 bg-slate-900 text-slate-100 focus:border-orange-400 focus:ring-orange-400/30'
+                            : 'border border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:ring-blue-200'
+                        }`}
                       >
                         <option value="">
                           {routesLoading
