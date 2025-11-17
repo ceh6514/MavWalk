@@ -19,7 +19,18 @@ const setupProfanity = (options) => {
 
 test('normalize enforces Unicode, case, leetspeak, and repetition rules', () => {
   const normalized = normalize('Àw3s000me!!!');
-  assert.equal(normalized, 'awesoome!!');
+  assert.equal(normalized, 'awesome');
+});
+
+test('normalize collapses spaced and obfuscated characters', () => {
+  const spaced = normalize('M 4 5 k e d   t e r m!');
+  assert.equal(spaced, 'maskedterm');
+
+  const separators = normalize('f_u-u...cK!!');
+  assert.equal(separators, 'fuck');
+
+  const readable = normalize('Masked term');
+  assert.equal(readable, 'masked term');
 });
 
 test('classify returns CLEAN for neutral input', () => {
@@ -31,6 +42,12 @@ test('classify returns CLEAN for neutral input', () => {
 test('classify detects configured terms even when obfuscated', () => {
   setupProfanity();
   const result = classify('M45kedterm vibes');
+  assert.equal(result.category, 'PROFANITY');
+});
+
+test('classify detects spaced-out profanity attempts', () => {
+  setupProfanity();
+  const result = classify('M 4 5 k e d   t e r m energy');
   assert.equal(result.category, 'PROFANITY');
 });
 
