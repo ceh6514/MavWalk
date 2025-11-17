@@ -1225,7 +1225,7 @@ const getMessages = () => {
   return query(`${MESSAGE_SELECT} WHERE m.status = 'approved' ORDER BY m.created_at DESC`);
 };
 
-const getRandomMessage = ({ startLocationName, destinationLocationName } = {}) => {
+const getRandomMessage = ({ startLocationName, destinationLocationName, excludeMessageIds } = {}) => {
   const conditions = [];
   const params = [];
 
@@ -1239,6 +1239,12 @@ const getRandomMessage = ({ startLocationName, destinationLocationName } = {}) =
   if (destinationLocationName) {
     conditions.push('destination.name = ?');
     params.push(destinationLocationName);
+  }
+
+  if (Array.isArray(excludeMessageIds) && excludeMessageIds.length > 0) {
+    const placeholders = excludeMessageIds.map(() => '?').join(', ');
+    conditions.push(`m.id NOT IN (${placeholders})`);
+    params.push(...excludeMessageIds);
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

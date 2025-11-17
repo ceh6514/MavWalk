@@ -83,6 +83,7 @@ const App = () => {
   const [encouragement, setEncouragement] = useState(null);
   const [msgLoading, setMsgLoading] = useState(false);
   const [msgError, setMsgError] = useState(null);
+  const lastMessageIdRef = useRef(null);
 
   useEffect(() => {
     document.body.style.backgroundColor = isDarkMode ? '#020617' : '#e0f2ff';
@@ -275,8 +276,15 @@ const App = () => {
 
     (async () => {
       try {
-        const row = await getRandomMessage({ start: startLocation, destination });
-        if (alive) setEncouragement(row?.message ?? null);
+        const row = await getRandomMessage({
+          start: startLocation,
+          destination,
+          exclude: lastMessageIdRef.current ? [lastMessageIdRef.current] : undefined,
+        });
+        if (alive) {
+          setEncouragement(row?.message ?? null);
+          lastMessageIdRef.current = row?.id ?? null;
+        }
       } catch (e) {
         if (alive) setMsgError(e.message || 'Failed to load messages');
       } finally {

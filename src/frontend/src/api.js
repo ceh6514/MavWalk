@@ -65,10 +65,16 @@ export async function postWalkCompletion(payload) {
   return request('/api/walks/completions', { method: 'POST', body: payload });
 }
 
-export async function getRandomMessage({ start, destination } = {}) {
+export async function getRandomMessage({ start, destination, exclude } = {}) {
   const qs = new URLSearchParams();
   if (start) qs.set('start', start);
   if (destination) qs.set('destination', destination);
+  if (Array.isArray(exclude) && exclude.length) {
+    const sanitized = exclude.filter((value) => Number.isInteger(value) && value > 0);
+    if (sanitized.length) {
+      qs.set('exclude', sanitized.join(','));
+    }
+  }
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
   return request(`/api/messages/random${suffix}`);
 }
