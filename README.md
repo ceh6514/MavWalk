@@ -54,6 +54,12 @@ MavWalk is a website curated for University of Texas at Arlington students to en
 - Server middleware masks profane input on write requests and logs only the category code and action taken.
 - Additional runtime terms can be supplied via the `EXTRA_PROFANITY` environment variable without touching source control.
 
+## Moderating Saved Messages
+- Every user submission now lands in a moderation queue (`status = pending`) until a reviewer approves or rejects it.
+- Run `npm run moderate -- list` in the project root to see pending messages in your terminal. Pass filters such as `--status approved`, `--start "Central Library"`, or `--destination "Fine Arts Building"` when you need a specific slice.
+- Approve or reject directly from the CLI with `npm run moderate -- approve <id>` or `npm run moderate -- reject <id>` (add `--reviewed-by` and `--notes` to capture reviewer context).
+- Prefer a REST workflow instead? The backend exposes `/api/moderation/messages` plus the `/approve` and `/reject` endpoints—example `curl` commands and more detail live in [docs/MODERATION.md](docs/MODERATION.md).
+
 ## Summary
 - Backend: `cd src/backend && npm install && npm start`
 - Frontend: `cd src/frontend && npm install && npm run dev`

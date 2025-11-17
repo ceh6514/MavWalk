@@ -5,6 +5,30 @@ const { spawnSync } = require('child_process');
 const { ValidationError } = require('./errors');
 
 const MESSAGE_MAX_LENGTH = 280;
+const MESSAGE_STATUSES = new Set(['pending', 'approved', 'rejected']);
+
+const normalizeMessageStatus = (status = 'pending') => {
+  if (typeof status !== 'string') {
+    throw new ValidationError('Message status must be a string.');
+  }
+
+  const normalized = status.trim().toLowerCase();
+
+  if (!MESSAGE_STATUSES.has(normalized)) {
+    throw new ValidationError(`Invalid message status: ${status}`);
+  }
+
+  return normalized;
+};
+
+const sanitizeProfanityCategory = (category) => {
+  if (typeof category !== 'string') {
+    return 'UNKNOWN';
+  }
+
+  const trimmed = category.trim();
+  return trimmed ? trimmed : 'UNKNOWN';
+};
 
 const dataDirectory = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDirectory)) {
@@ -719,16 +743,38 @@ const seedMessages = () => {
       }
 
       querySingle(
-        `INSERT INTO messages (message, route_id, start_location_id, end_location_id) VALUES (?, ?, ?, ?) RETURNING id`,
+        `INSERT INTO messages (
+           message,
+           route_id,
+           start_location_id,
+           end_location_id,
+           status,
+           profanity_category
+         ) VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
         [
           trimmedMessage,
           route ? route.id : null,
           startLocation.id,
           destinationLocation.id,
+          'approved',
+          'CLEAN',
         ]
       );
     });
   });
+};
+
+const addColumnIfMissing = (tableName, columnDefinition) => {
+  try {
+    execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnDefinition}`);
+    return true;
+  } catch (error) {
+    if (/duplicate column name/i.test(error.message)) {
+      return false;
+    }
+
+    throw error;
+  }
 };
 
 const initializeDatabase = () => {
@@ -820,12 +866,27 @@ const initializeDatabase = () => {
       start_location_id INTEGER,
       end_location_id INTEGER,
       message TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      profanity_category TEXT NOT NULL DEFAULT 'UNKNOWN',
+      reviewed_by TEXT,
+      review_notes TEXT,
+      reviewed_at DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(route_id) REFERENCES routes(id),
       FOREIGN KEY(start_location_id) REFERENCES locations(id),
       FOREIGN KEY(end_location_id) REFERENCES locations(id)
     );
   `);
+
+  const statusColumnAdded = addColumnIfMissing('messages', "status TEXT NOT NULL DEFAULT 'pending'");
+  addColumnIfMissing('messages', "profanity_category TEXT NOT NULL DEFAULT 'UNKNOWN'");
+  addColumnIfMissing('messages', 'reviewed_by TEXT');
+  addColumnIfMissing('messages', 'review_notes TEXT');
+  addColumnIfMissing('messages', 'reviewed_at DATETIME');
+
+  if (statusColumnAdded) {
+    execute("UPDATE messages SET status = 'approved'");
+  }
 
   seedUsers();
   seedLocations();
@@ -1116,6 +1177,7 @@ const MESSAGE_SELECT = `
   SELECT
     m.id,
     m.message,
+    m.status,
     m.created_at AS createdAt,
     start.name AS startLocation,
     destination.name AS destination
@@ -1124,12 +1186,37 @@ const MESSAGE_SELECT = `
   LEFT JOIN locations destination ON destination.id = m.end_location_id
 `;
 
-const saveMessage = ({ message, startLocationName, destinationLocationName }) => {
+const MESSAGE_MODERATION_SELECT = `
+  SELECT
+    m.id,
+    m.message,
+    m.status,
+    m.profanity_category AS profanityCategory,
+    m.reviewed_by AS reviewedBy,
+    m.review_notes AS reviewNotes,
+    m.reviewed_at AS reviewedAt,
+    m.created_at AS createdAt,
+    start.name AS startLocation,
+    destination.name AS destination
+  FROM messages m
+  LEFT JOIN locations start ON start.id = m.start_location_id
+  LEFT JOIN locations destination ON destination.id = m.end_location_id
+`;
+
+const saveMessage = ({
+  message,
+  startLocationName,
+  destinationLocationName,
+  status = 'pending',
+  profanityCategory,
+}) => {
   if (!message || !message.trim()) {
     throw new ValidationError('Message content is required.');
   }
 
   const trimmedMessage = message.trim();
+  const normalizedStatus = normalizeMessageStatus(status);
+  const normalizedProfanityCategory = sanitizeProfanityCategory(profanityCategory);
 
   if (trimmedMessage.length > MESSAGE_MAX_LENGTH) {
     throw new ValidationError(`Message content must be ${MESSAGE_MAX_LENGTH} characters or fewer.`);
@@ -1142,13 +1229,22 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
     : null;
 
   const insertedMessage = querySingle(
-    `INSERT INTO messages (message, route_id, start_location_id, end_location_id)
-     VALUES (?, ?, ?, ?) RETURNING id` ,
+    `INSERT INTO messages (
+       message,
+       route_id,
+       start_location_id,
+       end_location_id,
+       status,
+       profanity_category
+     )
+     VALUES (?, ?, ?, ?, ?, ?) RETURNING id` ,
     [
       trimmedMessage,
       route ? route.id : null,
       startLocation ? startLocation.id : null,
       destinationLocation ? destinationLocation.id : null,
+      normalizedStatus,
+      normalizedProfanityCategory,
     ]
   );
 
@@ -1156,12 +1252,14 @@ const saveMessage = ({ message, startLocationName, destinationLocationName }) =>
 };
 
 const getMessages = () => {
-  return query(`${MESSAGE_SELECT} ORDER BY m.created_at DESC`);
+  return query(`${MESSAGE_SELECT} WHERE m.status = 'approved' ORDER BY m.created_at DESC`);
 };
 
 const getRandomMessage = ({ startLocationName, destinationLocationName } = {}) => {
   const conditions = [];
   const params = [];
+
+  conditions.push("m.status = 'approved'");
 
   if (startLocationName) {
     conditions.push('start.name = ?');
@@ -1175,6 +1273,69 @@ const getRandomMessage = ({ startLocationName, destinationLocationName } = {}) =
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   return querySingle(`${MESSAGE_SELECT} ${whereClause} ORDER BY RANDOM() LIMIT 1`, params);
+};
+
+const getModerationMessages = ({ status = 'pending', startLocationName, destinationLocationName } = {}) => {
+  const conditions = [];
+  const params = [];
+
+  if (typeof status === 'string' && status.trim()) {
+    const trimmed = status.trim().toLowerCase();
+    if (trimmed !== 'all') {
+      conditions.push('m.status = ?');
+      params.push(normalizeMessageStatus(trimmed));
+    }
+  } else {
+    conditions.push("m.status = 'pending'");
+  }
+
+  if (startLocationName) {
+    conditions.push('start.name = ?');
+    params.push(startLocationName);
+  }
+
+  if (destinationLocationName) {
+    conditions.push('destination.name = ?');
+    params.push(destinationLocationName);
+  }
+
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  return query(`${MESSAGE_MODERATION_SELECT} ${whereClause} ORDER BY m.created_at ASC`, params);
+};
+
+const updateMessageStatus = ({ messageId, status, reviewedBy, reviewNotes }) => {
+  const normalizedStatus = normalizeMessageStatus(status);
+  const numericId = Number(messageId);
+
+  if (!Number.isInteger(numericId) || numericId <= 0) {
+    throw new ValidationError('A valid message id is required.');
+  }
+
+  const message = querySingle('SELECT id FROM messages WHERE id = ?', [numericId]);
+
+  if (!message) {
+    throw new ValidationError('Message not found.');
+  }
+
+  const reviewer = normalizedStatus === 'pending'
+    ? null
+    : (typeof reviewedBy === 'string' && reviewedBy.trim() ? reviewedBy.trim() : null);
+
+  const notes = normalizedStatus === 'pending'
+    ? null
+    : (typeof reviewNotes === 'string' && reviewNotes.trim() ? reviewNotes.trim() : null);
+
+  execute(
+    `UPDATE messages
+       SET status = ?,
+           reviewed_by = ?,
+           review_notes = ?,
+           reviewed_at = CASE WHEN ? = 'pending' THEN NULL ELSE CURRENT_TIMESTAMP END
+     WHERE id = ?`,
+    [normalizedStatus, reviewer, notes, normalizedStatus, numericId]
+  );
+
+  return querySingle(`${MESSAGE_MODERATION_SELECT} WHERE m.id = ?`, [numericId]);
 };
 
 const recordWalkCompletion = ({ startLocationName, destinationLocationName }) => {
@@ -1223,7 +1384,8 @@ const getWalksTodayCount = () => {
 const getMessagesCount = () => {
   const row = querySingle(
     `SELECT COUNT(*) AS count
-     FROM messages`
+     FROM messages
+     WHERE status = 'approved'`
   );
 
   return row ? Number(row.count) || 0 : 0;
@@ -1246,6 +1408,8 @@ module.exports = {
   saveMessage,
   getMessages,
   getRandomMessage,
+  getModerationMessages,
+  updateMessageStatus,
   recordWalkCompletion,
   getWalksTodayCount,
   getMessagesCount,

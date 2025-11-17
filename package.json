@@ -8,7 +8,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=1"
+    "test": "node --test --test-concurrency=1",
+    "moderate": "node scripts/moderate.js"
   },
   "keywords": [],
   "author": "",
