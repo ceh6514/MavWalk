@@ -35,6 +35,22 @@ const defaultMarkerIcon = L.icon({
 L.Marker.prototype.options.icon = defaultMarkerIcon;
 
 const defaultCenter = [32.7318, -97.1133];
+
+const mapLayerOptions = {
+  streets: {
+    id: 'streets',
+    label: 'Map',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  satellite: {
+    id: 'satellite',
+    label: 'Satellite',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution:
+      'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+  },
+};
 const MESSAGE_MAX_LENGTH = 280;
 
 const App = () => {
@@ -54,6 +70,7 @@ const App = () => {
   const [stats, setStats] = useState({ walksToday: null, messagesShared: null });
   const [completionStatus, setCompletionStatus] = useState(null);
   const [isRecordingCompletion, setIsRecordingCompletion] = useState(false);
+  const [activeMapLayer, setActiveMapLayer] = useState(mapLayerOptions.streets.id);
 
   // Map/location state
   const [userLocation, setUserLocation] = useState(null);
@@ -174,6 +191,7 @@ const App = () => {
   }, [destination, destinationOptions]);
 
   const popularDestinations = useMemo(() => destinationOptions.slice(0, 4), [destinationOptions]);
+  const selectedMapLayer = mapLayerOptions[activeMapLayer] ?? mapLayerOptions.streets;
 
   // Geolocation watcher lifecycle
   useEffect(() => {
@@ -742,6 +760,32 @@ const App = () => {
                 )}
               </div>
 
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <p className="text-sm font-semibold text-gray-700">Map view</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.values(mapLayerOptions).map((layer) => {
+                      const isActiveLayer = selectedMapLayer.id === layer.id;
+                      return (
+                        <button
+                          key={layer.id}
+                          type="button"
+                          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                            isActiveLayer
+                              ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600'
+                          }`}
+                          aria-pressed={isActiveLayer}
+                          onClick={() => setActiveMapLayer(layer.id)}
+                        >
+                          {layer.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
               <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-lg">
                 <MapContainer
                   center={mapCenter}
@@ -749,10 +793,7 @@ const App = () => {
                   style={{ height: '320px', width: '100%' }}
                   key={`${routeResult.startCoordinates}-${routeResult.destinationCoordinates}`}
                 >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
+                  <TileLayer attribution={selectedMapLayer.attribution} url={selectedMapLayer.url} />
                   <Marker position={routeResult.startCoordinates}>
                     <Tooltip direction="top" offset={[0, -20]} permanent>
                       {startLocation}

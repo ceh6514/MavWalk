@@ -12,7 +12,56 @@ const defaultLeetMap = new Map([
 const replaceLeetCharacters = (text) =>
   text.replace(/[013457@$]/g, (char) => defaultLeetMap.get(char) ?? char);
 
-const collapseRepeatingCharacters = (text) => text.replace(/(.)\1{2,}/g, '$1$1');
+const collapseRepeatingCharacters = (text) => text.replace(/([\p{L}\p{N}])\1+/gu, '$1');
+
+const stripZeroWidthCharacters = (text) => text.replace(/[\u200b-\u200d\ufeff]/gu, '');
+
+const removeInnerSeparators = (text) =>
+  text.replace(/(?<=[\p{L}\p{N}])[^\p{L}\p{N}\s]+(?=[\p{L}\p{N}])/gu, '');
+
+const replaceObfuscatingSeparators = (text) => text.replace(/[^\p{L}\p{N}\s]/gu, ' ');
+
+const collapseWhitespace = (text) => text.replace(/\s+/g, ' ').trim();
+
+const joinObfuscatedCharacters = (text) => {
+  const tokens = text.split(/\s+/u).filter(Boolean);
+
+  if (tokens.length === 0) {
+    return '';
+  }
+
+  const singleCharPattern = /^[\p{L}\p{N}]$/u;
+  const result = [];
+  let buffer = [];
+
+  const flushBuffer = () => {
+    if (buffer.length === 0) {
+      return;
+    }
+
+    if (buffer.length >= 3) {
+      result.push(buffer.join(''));
+    } else {
+      result.push(...buffer);
+    }
+
+    buffer = [];
+  };
+
+  tokens.forEach((token) => {
+    if (singleCharPattern.test(token)) {
+      buffer.push(token);
+      return;
+    }
+
+    flushBuffer();
+    result.push(token);
+  });
+
+  flushBuffer();
+
+  return result.join(' ');
+};
 
 const normalize = (text) => {
   if (typeof text !== 'string') {
@@ -22,8 +71,13 @@ const normalize = (text) => {
   let normalized = text.normalize('NFKC').toLowerCase();
   normalized = normalized.normalize('NFD').replace(/\p{M}/gu, '');
   normalized = replaceLeetCharacters(normalized);
+  normalized = stripZeroWidthCharacters(normalized);
+  normalized = removeInnerSeparators(normalized);
+  normalized = replaceObfuscatingSeparators(normalized);
   normalized = collapseRepeatingCharacters(normalized);
-  return normalized;
+  normalized = collapseWhitespace(normalized);
+  normalized = joinObfuscatedCharacters(normalized);
+  return collapseWhitespace(normalized);
 };
 
 let profanityLibrary;
