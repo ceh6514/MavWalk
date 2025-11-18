@@ -309,6 +309,25 @@ const App = () => {
     return [totalLat / pathCoordinates.length, totalLng / pathCoordinates.length];
   }, [routeResult]);
 
+  const routeDistanceMiles = useMemo(() => {
+    const coordinates = routeResult?.pathCoordinates;
+    if (!coordinates || coordinates.length < 2) {
+      return null;
+    }
+
+    const totalMeters = coordinates.reduce((distance, [lat, lng], index) => {
+      if (index === 0) {
+        return 0;
+      }
+
+      const [prevLat, prevLng] = coordinates[index - 1];
+      return distance + L.latLng(prevLat, prevLng).distanceTo(L.latLng(lat, lng));
+    }, 0);
+
+    const miles = totalMeters / 1609.34;
+    return Number.isFinite(miles) ? Number(miles.toFixed(2)) : null;
+  }, [routeResult]);
+
   const stageCardClasses = useMemo(
     () =>
       `rounded-3xl shadow-2xl p-8 space-y-6 transition-colors duration-500 ${
@@ -541,31 +560,22 @@ const App = () => {
           isDarkMode ? 'bg-slate-950/80 backdrop-blur' : 'bg-blue-600'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="w-12 h-12 flex items-center justify-center">
               <img src={mavWalkLogo} alt="MavWalk" className="w-full h-full object-contain" />
             </div>
             <div className="flex items-center gap-2">
               <span className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-white'}`}>MavWalk</span>
-              <span className="bg-orange-500 text-white text-sm font-semibold px-2.5 py-1 rounded">BETA</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              className={`px-5 py-2.5 rounded-lg font-semibold text-base flex items-center gap-2 transition-colors ${
-                isDarkMode ? 'bg-green-500/80 hover:bg-green-500 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
-              }`}
-            >
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-              Live
-            </button>
+          <div className="flex items-center gap-3 flex-1 justify-end flex-wrap">
             <button
               type="button"
               onClick={() => setIsDarkMode((prev) => !prev)}
               aria-pressed={isDarkMode}
-              className={`px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-colors ${
+              className={`px-5 py-2.5 rounded-lg font-semibold text-base flex items-center gap-2 transition-colors shadow-sm w-full sm:w-auto justify-center ${
                 isDarkMode
                   ? 'bg-slate-800 text-slate-100 hover:bg-slate-700'
                   : 'bg-white/20 text-white hover:bg-white/30'
@@ -864,16 +874,21 @@ const App = () => {
             <div className={stageCardClasses}>
               {renderHeader('Follow the highlighted path to reach your destination!')}
 
-              <div
-                className={`rounded-xl px-5 py-4 space-y-3 transition-colors duration-500 ${
-                  isDarkMode ? 'border border-slate-800 bg-slate-900/60' : 'border border-gray-200 bg-gray-50'
-                }`}
-              >
-                <p className={`text-base font-semibold ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>
-                  {routeResult.summary}
-                </p>
-                {routeResult.steps && (
-                  <ol
+                <div
+                  className={`rounded-xl px-5 py-4 space-y-3 transition-colors duration-500 ${
+                    isDarkMode ? 'border border-slate-800 bg-slate-900/60' : 'border border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <p className={`text-base font-semibold ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>
+                    {routeResult.summary}
+                  </p>
+                  {routeDistanceMiles !== null && (
+                    <p className={`text-base ${isDarkMode ? 'text-slate-200' : 'text-gray-700'}`}>
+                      <span className="font-semibold">Distance:</span> {routeDistanceMiles} miles
+                    </p>
+                  )}
+                  {routeResult.steps && (
+                    <ol
                     className={`list-decimal list-inside space-y-2 text-base ${
                       isDarkMode ? 'text-slate-300' : 'text-gray-600'
                     }`}
