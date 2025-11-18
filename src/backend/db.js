@@ -137,18 +137,26 @@ const campusLocationSeedData = [
   { name: 'Arlington Hall', latitude: 32.7311085432566, longitude: -97.10943893455445 },
   { name: 'Business Building', latitude: 32.729722823761264, longitude: -97.11062181276046 },
   { name: 'Central Library', latitude: 32.72973218257906, longitude: -97.11288868672736 },
+  {
+    name: 'Chemistry & Physics Building (Planetarium)',
+    latitude: 32.73031837450483,
+    longitude: -97.11202468917985,
+  },
   { name: 'College Park Center', latitude: 32.730686125573584, longitude: -97.107987409975 },
   { name: 'Engineering Research Building', latitude: 32.73333488038476, longitude: -97.11330273623744 },
   { name: 'Fine Arts Building', latitude: 32.73125608493911, longitude: -97.11518573684964 },
   { name: 'Maverick Activities Center', latitude: 32.732001268010734, longitude: -97.11694111854234 },
   { name: 'Nedderman Hall', latitude: 32.73221994509294, longitude: -97.11402628867783 },
+  { name: 'Pickard Hall', latitude: 32.7291244617742, longitude: -97.11192833796818 },
   { name: 'Science Hall', latitude: 32.73053390340398, longitude: -97.11365937913979 },
   {
     name: 'Science & Engineering Innovation & Research Building',
     latitude: 32.72807528494717,
     longitude: -97.11295766562837,
   },
+  { name: 'SWSH', latitude: 32.727805555673, longitude: -97.11227081213258 },
   { name: 'University Center', latitude: 32.73171612022473, longitude: -97.11100963609321 },
+  { name: 'Woolf Hall', latitude: 32.73116949688685, longitude: -97.11323673122926 },
 ];
 
 const routeSeedData = [
@@ -459,6 +467,411 @@ const routeSeedData = [
       'Enter the Central Library at the main plaza.',
     ],
   },
+  {
+    start: 'Central Library',
+    destination: 'Engineering Research Building',
+    eta: '7 minutes',
+    summary: 'Curated walk from Central Library to Engineering Research Building. Estimated travel time: 7 minutes.',
+    pathCoordinates: [
+      [32.729682688555194, -97.11327329078266],
+      [32.73324830228815, -97.11321635714548],
+    ],
+    steps: [
+      'Exit the Central Library and turn right to follow the straight path.',
+      'Continue past Nedderman Hall until the Engineering Research Building is in front of you.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Nedderman Hall',
+    eta: '5 minutes',
+    summary: 'Curated walk from Central Library to Nedderman Hall. Estimated travel time: 5 minutes.',
+    pathCoordinates: [
+      [32.72978385609105, -97.11327707281214],
+      [32.73191979012477, -97.11319937330111],
+      [32.73192881532488, -97.11383237462302],
+    ],
+    steps: [
+      'Leave the library and turn right onto the main walkway.',
+      'Continue past Woolf Hall toward the Geoscience Building.',
+      'Turn left while hugging the Geoscience Building to reach Nedderman Hall on your right.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Woolf Hall',
+    eta: '4 minutes',
+    summary: 'Curated walk from Central Library to Woolf Hall. Estimated travel time: 4 minutes.',
+    pathCoordinates: [
+      [32.72973199678889, -97.1132819390022],
+      [32.73016277650635, -97.11327435256955],
+      [32.73116949688685, -97.11323673122926],
+    ],
+    steps: [
+      'Turn right when you exit the Central Library.',
+      'Walk past the Chemistry Research Building and Preston Hall.',
+      'Woolf Hall will be on your right.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'University Center',
+    eta: '5 minutes',
+    summary: 'Curated walk from Central Library to University Center. Estimated travel time: 5 minutes.',
+    pathCoordinates: [
+      [32.72975263559524, -97.11328670182678],
+      [32.73116735895367, -97.11322232881099],
+      [32.73115607735701, -97.11214676300558],
+      [32.73135688956417, -97.11195632616722],
+    ],
+    steps: [
+      'Exit the library to the right and continue along the path.',
+      'Pass the Chemistry Research Building and Preston Hall, then turn right.',
+      'Follow the path down and the University Center will be on your left.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Pickard Hall',
+    eta: '4 minutes',
+    summary: 'Curated walk from Central Library to Pickard Hall. Estimated travel time: 4 minutes.',
+    pathCoordinates: [
+      [32.72969359841053, -97.11326978380642],
+      [32.7293844016635, -97.1132940189636],
+      [32.72938440166419, -97.11256324994493],
+      [32.72942329771339, -97.11251926847636],
+      [32.72939578587468, -97.11219673770351],
+      [32.7292904818644, -97.11217982175319],
+      [32.7291244617742, -97.11192833796818],
+    ],
+    steps: [
+      'Exit the library to your left and round the corner.',
+      'Hug the construction fence as you walk down the pathway.',
+      'Turn right at the intersection toward Pickard Hall and head inside.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'SWSH',
+    eta: '8 minutes',
+    summary: 'Curated walk from Central Library to SWSH. Estimated travel time: 8 minutes.',
+    pathCoordinates: [
+      [32.72970308857129, -97.11327776125366],
+      [32.729386228573425, -97.11328791082332],
+      [32.729373895676325, -97.11254699223579],
+      [32.729413740414145, -97.11253120401632],
+      [32.72939761278425, -97.11220641778466],
+      [32.72846075523868, -97.11218135811421],
+      [32.727805555673, -97.11227081213258],
+    ],
+    steps: [
+      'Leave the library to the left and wrap around the corner.',
+      'Follow the construction fence, then turn right at the intersection.',
+      'Walk past Pickard Hall and continue straight until SWSH appears ahead.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Business Building',
+    eta: '7 minutes',
+    summary: 'Curated walk from Central Library to Business Building. Estimated travel time: 7 minutes.',
+    pathCoordinates: [
+      [32.72970163057093, -97.11327779592956],
+      [32.72939506510196, -97.11327988064674],
+      [32.72939187269941, -97.11254936114106],
+      [32.72941900811738, -97.11254556623456],
+      [32.72940143210087, -97.1121931140046],
+      [32.72935197189075, -97.11214569880045],
+      [32.72938707268783, -97.11066444782271],
+    ],
+    steps: [
+      'Exit the Central Library to the left and wrap around the corner.',
+      'Keep along the construction fence and continue straight through the Maverick Parking Garage.',
+      'Exit the garage and the Business Building will be in front of you.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Chemistry & Physics Building (Planetarium)',
+    eta: '5 minutes',
+    summary: 'Curated walk from Central Library to the Chemistry & Physics Building. Estimated travel time: 5 minutes.',
+    pathCoordinates: [
+      [32.729720009312956, -97.1132819037798],
+      [32.73015201544474, -97.1132627655677],
+      [32.73018073761712, -97.11216550515189],
+      [32.73031837450483, -97.11202468917985],
+    ],
+    steps: [
+      'Exit the library to your right and head down the path.',
+      'Turn right at the first intersection and pass the Chemistry Research Building.',
+      'The Chemistry & Physics Building will be on your left.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Fine Arts Building',
+    eta: '6 minutes',
+    summary: 'Curated walk from Central Library to Fine Arts Building. Estimated travel time: 6 minutes.',
+    pathCoordinates: [
+      [32.72970657029397, -97.11329216680913],
+      [32.73027137010451, -97.1132656142948],
+      [32.73031335300792, -97.11433925395374],
+      [32.73054271019896, -97.11437977717078],
+      [32.73064237430787, -97.11441024226527],
+      [32.73068214948696, -97.114721439228],
+      [32.730822552613816, -97.11475414339691],
+    ],
+    steps: [
+      'Exit the Central Library and turn right.',
+      'Turn left toward Science Hall and continue past it.',
+      'Turn right after Science Hall, go up the stairs, cross the bridge, then take the ramp down into Fine Arts.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'College Park Center',
+    eta: '9 minutes',
+    summary: 'Curated walk from Central Library to College Park Center. Estimated travel time: 9 minutes.',
+    pathCoordinates: [
+      [32.72970932334531, -97.11328335884056],
+      [32.73016364164521, -97.11328407404768],
+      [32.730102398665146, -97.1100188845775],
+      [32.73007764795855, -97.10886264867274],
+      [32.73011387201028, -97.10864734378667],
+      [32.730686125573584, -97.107987409975],
+    ],
+    steps: [
+      'Exit the library and turn right.',
+      'At the first intersection where you can, turn right and pass the Planetarium.',
+      'Stay on the sidewalk past the Business Building area, cross two road intersections, and College Park Center will be ahead.',
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Arlington Hall',
+    eta: '9 minutes',
+    summary: 'Curated walk from Central Library to Arlington Hall. Estimated travel time: 9 minutes.',
+    pathCoordinates: [
+      [32.72971288605262, -97.11328468542872],
+      [32.7301416124826, -97.11326674792828],
+      [32.7301416124826, -97.11119623571665],
+      [32.73026800926421, -97.11103010390605],
+      [32.73071601059807, -97.11101835489818],
+      [32.73103509943798, -97.10985968500077],
+      [32.73110106626948, -97.10943150519539],
+    ],
+    steps: [
+      'Exit the library and turn right, then take the first right intersection.',
+      'Walk past the Planetarium, turn left, and cut through Brazos Park.',
+      'Continue through the park until Arlington Hall is in front of you.',
+    ],
+  },
+  {
+    start: 'Engineering Research Building',
+    destination: 'Central Library',
+    eta: '7 minutes',
+    summary: 'Curated walk from Engineering Research Building to Central Library. Estimated travel time: 7 minutes.',
+    pathCoordinates: [
+      [32.73324830228815, -97.11321635714548],
+      [32.729682688555194, -97.11327329078266],
+    ],
+    steps: [
+      'Exit the ERB and walk south down the engineering mall.',
+      'Continue toward the center of campus until the Central Library appears on your left.',
+    ],
+  },
+  {
+    start: 'Nedderman Hall',
+    destination: 'Central Library',
+    eta: '5 minutes',
+    summary: 'Curated walk from Nedderman Hall to Central Library. Estimated travel time: 5 minutes.',
+    pathCoordinates: [
+      [32.73192881532488, -97.11383237462302],
+      [32.73191979012477, -97.11319937330111],
+      [32.72978385609105, -97.11327707281214],
+    ],
+    steps: [
+      'Exit Nedderman Hall toward the walkway shared with Woolf Hall.',
+      'Head south toward the center of campus.',
+      'The Central Library will be on your left.',
+    ],
+  },
+  {
+    start: 'Woolf Hall',
+    destination: 'Central Library',
+    eta: '4 minutes',
+    summary: 'Curated walk from Woolf Hall to Central Library. Estimated travel time: 4 minutes.',
+    pathCoordinates: [
+      [32.73116949688685, -97.11323673122926],
+      [32.73016277650635, -97.11327435256955],
+      [32.72973199678889, -97.1132819390022],
+    ],
+    steps: [
+      'Leave Woolf Hall and walk straight down the path.',
+      'Continue past Preston Hall and the Chemistry Research Building.',
+      'The Central Library will be on your left.',
+    ],
+  },
+  {
+    start: 'University Center',
+    destination: 'Central Library',
+    eta: '5 minutes',
+    summary: 'Curated walk from University Center to Central Library. Estimated travel time: 5 minutes.',
+    pathCoordinates: [
+      [32.73135688956417, -97.11195632616722],
+      [32.73115607735701, -97.11214676300558],
+      [32.73116735895367, -97.11322232881099],
+      [32.72975263559524, -97.11328670182678],
+    ],
+    steps: [
+      'Exit the University Center toward Woolf Hall.',
+      'Turn left at the first walkway intersection past Woolf Hall.',
+      'Continue straight, pass Preston Hall and the Chemistry Research Building, and the library will be on your left.',
+    ],
+  },
+  {
+    start: 'Pickard Hall',
+    destination: 'Central Library',
+    eta: '4 minutes',
+    summary: 'Curated walk from Pickard Hall to Central Library. Estimated travel time: 4 minutes.',
+    pathCoordinates: [
+      [32.7291244617742, -97.11192833796818],
+      [32.7292904818644, -97.11217982175319],
+      [32.72939578587468, -97.11219673770351],
+      [32.72942329771339, -97.11251926847636],
+      [32.72938440166419, -97.11256324994493],
+      [32.7293844016635, -97.1132940189636],
+      [32.72969359841053, -97.11326978380642],
+    ],
+    steps: [
+      'Exit Pickard Hall and walk toward the construction fence.',
+      'Follow the fence line to the right and walk past the side of the library.',
+      'Round the corner and enter the Central Library.',
+    ],
+  },
+  {
+    start: 'SWSH',
+    destination: 'Central Library',
+    eta: '8 minutes',
+    summary: 'Curated walk from SWSH to Central Library. Estimated travel time: 8 minutes.',
+    pathCoordinates: [
+      [32.727805555673, -97.11227081213258],
+      [32.72846075523868, -97.11218135811421],
+      [32.72939761278425, -97.11220641778466],
+      [32.729413740414145, -97.11253120401632],
+      [32.729373895676325, -97.11254699223579],
+      [32.729386228573425, -97.11328791082332],
+      [32.72970308857129, -97.11327776125366],
+    ],
+    steps: [
+      'Leave SWSH and walk straight up the pathway.',
+      'Continue past Pickard Hall and turn left near the construction fence.',
+      'Walk toward the library, turn right around the corner, and enter.',
+    ],
+  },
+  {
+    start: 'Business Building',
+    destination: 'Central Library',
+    eta: '7 minutes',
+    summary: 'Curated walk from Business Building to Central Library. Estimated travel time: 7 minutes.',
+    pathCoordinates: [
+      [32.72938707268783, -97.11066444782271],
+      [32.72935197189075, -97.11214569880045],
+      [32.72940143210087, -97.1121931140046],
+      [32.72941900811738, -97.11254556623456],
+      [32.72939187269941, -97.11254936114106],
+      [32.72939506510196, -97.11327988064674],
+      [32.72970163057093, -97.11327779592956],
+    ],
+    steps: [
+      'Exit the Business Building and walk toward the Maverick Parking Garage.',
+      'Continue through the garage and follow the path along the construction fence.',
+      'Turn the corner of the library and head inside.',
+    ],
+  },
+  {
+    start: 'Chemistry & Physics Building (Planetarium)',
+    destination: 'Central Library',
+    eta: '5 minutes',
+    summary: 'Curated walk from the Chemistry & Physics Building to Central Library. Estimated travel time: 5 minutes.',
+    pathCoordinates: [
+      [32.73031837450483, -97.11202468917985],
+      [32.73018073761712, -97.11216550515189],
+      [32.73015201544474, -97.1132627655677],
+      [32.729720009312956, -97.1132819037798],
+    ],
+    steps: [
+      'Exit the Planetarium and walk straight down the path.',
+      'Turn left at the intersection and continue walking.',
+      'The Central Library will be on your left.',
+    ],
+  },
+  {
+    start: 'Fine Arts Building',
+    destination: 'Central Library',
+    eta: '6 minutes',
+    summary: 'Curated walk from Fine Arts Building to Central Library. Estimated travel time: 6 minutes.',
+    pathCoordinates: [
+      [32.730822552613816, -97.11475414339691],
+      [32.73068214948696, -97.114721439228],
+      [32.73064237430787, -97.11441024226527],
+      [32.73054271019896, -97.11437977717078],
+      [32.73031335300792, -97.11433925395374],
+      [32.73027137010451, -97.1132656142948],
+      [32.72970657029397, -97.11329216680913],
+    ],
+    steps: [
+      'Exit Fine Arts via the ramp and walk forward.',
+      'Turn left to cross the bridge, then go down the right stairs and walk straight.',
+      'Turn the corner around Science Hall, pass it, then turn right toward the library.',
+    ],
+  },
+  {
+    start: 'College Park Center',
+    destination: 'Central Library',
+    eta: '9 minutes',
+    summary: 'Curated walk from College Park Center to Central Library. Estimated travel time: 9 minutes.',
+    pathCoordinates: [
+      [32.730686125573584, -97.107987409975],
+      [32.73011387201028, -97.10864734378667],
+      [32.73007764795855, -97.10886264867274],
+      [32.730102398665146, -97.1100188845775],
+      [32.73016364164521, -97.11328407404768],
+      [32.72970932334531, -97.11328335884056],
+    ],
+    steps: [
+      'Exit College Park Center and walk straight, crossing two road intersections.',
+      'Continue toward campus past the Business Building and Planetarium.',
+      'Follow the straight path until the Central Library appears on your left.',
+    ],
+  },
+  {
+    start: 'Science & Engineering Innovation & Research Building',
+    destination: 'Maverick Activities Center',
+    eta: '10 minutes',
+    summary: 'Curated walk from SEIR to Maverick Activities Center. Estimated travel time: 10 minutes.',
+    pathCoordinates: [
+      [32.72841501315013, -97.1132990603721],
+      [32.72843245468692, -97.11404864034755],
+      [32.72906973929043, -97.1140326918381],
+      [32.72922134527104, -97.11389234494939],
+      [32.72968152823042, -97.11387958614215],
+      [32.72989484838216, -97.11374561865748],
+      [32.730396142149026, -97.11431425678039],
+      [32.73063303296582, -97.11440946575111],
+      [32.730736707280286, -97.11585141798821],
+      [32.731365925736625, -97.11598698032539],
+      [32.73141824861356, -97.11629850565431],
+      [32.73142776541539, -97.11666073036548],
+      [32.731885019610075, -97.1166178766269],
+    ],
+    steps: [
+      'Exit the back of SEIR, turn left, then head right into University Hall.',
+      'Cut through University Hall toward Science Hall and angle left toward its north side.',
+      'Climb the stairs, turn left across the bridge, then go right past Fine Arts into the CAPPA Courtyard.',
+      'Continue through the Architecture Building, cross the street, turn right, and the MAC will be ahead.',
+    ],
+  },
 ];
 
 const routeMessageSeedData = [
@@ -530,6 +943,160 @@ const routeMessageSeedData = [
     destination: 'Central Library',
     messages: [
       'Enjoy a peaceful stroll from Arlington Hall to Central Library.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Engineering Research Building',
+    messages: [
+      'Let the engineering mall inspire you as you walk from the library to ERB.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Nedderman Hall',
+    messages: [
+      'A steady walk past Woolf Hall will have you at Nedderman in no time.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Woolf Hall',
+    messages: [
+      'Breathe easy on the quick hop from the library to Woolf Hall.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'University Center',
+    messages: [
+      'Let the shaded walkway guide your calm stroll to the UC.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Pickard Hall',
+    messages: [
+      'Follow the fence line and enjoy the quiet path toward Pickard Hall.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'SWSH',
+    messages: [
+      'Settle into a relaxed rhythm as you make the longer walk to SWSH.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Business Building',
+    messages: [
+      'Carry your focus from the stacks to the Business Building with a purposeful stride.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Chemistry & Physics Building (Planetarium)',
+    messages: [
+      'Enjoy the science sights as you round the corner toward the Planetarium.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Fine Arts Building',
+    messages: [
+      'Let creativity build as you cross the bridge toward Fine Arts.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'College Park Center',
+    messages: [
+      'Use the long walk to College Park Center as a moment to reset your pace.'
+    ],
+  },
+  {
+    start: 'Central Library',
+    destination: 'Arlington Hall',
+    messages: [
+      'Enjoy the tree-lined trek from the heart of campus to Arlington Hall.'
+    ],
+  },
+  {
+    start: 'Engineering Research Building',
+    destination: 'Central Library',
+    messages: [
+      'Ease back toward the library after wrapping up at ERB.'
+    ],
+  },
+  {
+    start: 'Nedderman Hall',
+    destination: 'Central Library',
+    messages: [
+      'Let the short southbound walk from Nedderman clear your thoughts.'
+    ],
+  },
+  {
+    start: 'Woolf Hall',
+    destination: 'Central Library',
+    messages: [
+      'Take a mindful pause as you head from Woolf Hall back to the library.'
+    ],
+  },
+  {
+    start: 'University Center',
+    destination: 'Central Library',
+    messages: [
+      'Glide past the labs and into study mode on the way to the library.'
+    ],
+  },
+  {
+    start: 'Pickard Hall',
+    destination: 'Central Library',
+    messages: [
+      'A quick walk past the fence delivers you right to the library doors.'
+    ],
+  },
+  {
+    start: 'SWSH',
+    destination: 'Central Library',
+    messages: [
+      'Settle into a calm cadence for the uphill walk to the library.'
+    ],
+  },
+  {
+    start: 'Business Building',
+    destination: 'Central Library',
+    messages: [
+      'Let the breeze through the garage refresh you before studying at the library.'
+    ],
+  },
+  {
+    start: 'Chemistry & Physics Building (Planetarium)',
+    destination: 'Central Library',
+    messages: [
+      'Drift from the dome to the library with curiosity leading the way.'
+    ],
+  },
+  {
+    start: 'Fine Arts Building',
+    destination: 'Central Library',
+    messages: [
+      'Carry that creative spark with you as you return to the library.'
+    ],
+  },
+  {
+    start: 'College Park Center',
+    destination: 'Central Library',
+    messages: [
+      'Make the long stroll from College Park Center a chance to stretch and reset.'
+    ],
+  },
+  {
+    start: 'Science & Engineering Innovation & Research Building',
+    destination: 'Maverick Activities Center',
+    messages: [
+      'Turn the walk from SEIR to the MAC into a refreshing campus tour.'
     ],
   },
 ];
