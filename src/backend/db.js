@@ -30,22 +30,13 @@ const sanitizeProfanityCategory = (category) => {
   return trimmed ? trimmed : 'UNKNOWN';
 };
 
-const projectRoot = path.resolve(__dirname, '..', '..');
-const resolveWithinProject = (inputPath) => {
-  if (!inputPath) {
-    return null;
-  }
-
-  return path.isAbsolute(inputPath) ? inputPath : path.join(projectRoot, inputPath);
-};
-
-const dataDirectory = resolveWithinProject(process.env.DB_DIR) || path.join(projectRoot, 'data');
+const dataDirectory = process.env.DB_DIR || path.join(process.cwd(), 'data');
 if (!fs.existsSync(dataDirectory)) {
   fs.mkdirSync(dataDirectory, { recursive: true });
 }
 
-// Cloud Run stores the SQLite file inside the container; local development keeps using this repo-level on-disk path.
-const databasePath = resolveWithinProject(process.env.DB_PATH) || path.join(dataDirectory, 'mavwalk.db');
+// Cloud Run stores the SQLite file inside the container; local development keeps using this on-disk path.
+const databasePath = process.env.DB_PATH || path.join(dataDirectory, 'mavwalk.db');
 
 const escapeValue = (value) => {
   if (value === null || value === undefined) {

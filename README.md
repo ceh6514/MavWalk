@@ -29,10 +29,10 @@ MavWalk is a website curated for University of Texas at Arlington students to en
 
 ### Backend environment variables
 - `PORT`: Overrides the listen port (Cloud Run injects this; defaults to `3001` locally).
-- `DB_DIR`: Directory that will hold the SQLite database file (defaults to the repo-level `data/` folder so the CLI and server share one file).
+- `DB_DIR`: Directory that will hold the SQLite database file (defaults to `./data` inside the backend working directory).
 - `DB_PATH`: Explicit SQLite file path (overrides `DB_DIR` when provided).
 
-For local development, you do not need to set any of these—the CLI utilities and Express server will continue to use `data/mavwalk.db` at the root of the repository automatically.
+For local development, you do not need to set any of these—the CLI utilities and Express server will continue to use `./data/mavwalk.db` automatically.
 
 ## Frontend Setup (`src/frontend`)
 1. Open a second terminal (or tab) and move into the frontend directory:
