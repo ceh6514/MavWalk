@@ -309,6 +309,16 @@ const App = () => {
     return [totalLat / pathCoordinates.length, totalLng / pathCoordinates.length];
   }, [routeResult]);
 
+  const stageCardClasses = useMemo(
+    () =>
+      `rounded-3xl shadow-2xl p-8 space-y-6 transition-colors duration-500 ${
+        isDarkMode
+          ? 'bg-slate-900/80 border border-slate-800 text-slate-100 backdrop-blur'
+          : 'bg-white text-gray-900'
+      }`,
+    [isDarkMode]
+  );
+
   const resetJourney = () => {
     setStartLocation('');
     setDestination('');
@@ -585,11 +595,7 @@ const App = () => {
       <div className="relative z-10 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-xl">
           {stage === 'home' && (
-            <div
-              className={`rounded-3xl shadow-2xl p-8 space-y-6 transition-colors duration-500 ${
-                isDarkMode ? 'bg-slate-900/80 border border-slate-800 text-slate-100 backdrop-blur' : 'bg-white text-gray-900'
-              }`}
-            >
+            <div className={stageCardClasses}>
               {renderHeader()}
 
               {/* Plan Your Journey Section */}
@@ -801,30 +807,46 @@ const App = () => {
           )}
 
           {stage === 'message' && routeResult && (
-            <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+            <div className={stageCardClasses}>
               {renderHeader('A little encouragement before you head out!')}
 
-              <section className="rounded-2xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 px-6 py-8 text-center space-y-4">
-                <p className="text-sm font-semibold uppercase tracking-wider text-orange-600">Today's Kind Note</p>
+              <section
+                className={`rounded-2xl border-2 px-6 py-8 text-center space-y-4 transition-colors duration-500 ${
+                  isDarkMode
+                    ? 'border-slate-800 bg-slate-900/70'
+                    : 'border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50'
+                }`}
+              >
+                <p
+                  className={`text-sm font-semibold uppercase tracking-wider ${
+                    isDarkMode ? 'text-amber-200' : 'text-orange-600'
+                  }`}
+                >
+                  Today's Kind Note
+                </p>
 
                 {/* Loading / Error / Empty / Success states */}
                 {msgLoading && (
-                  <p className="text-2xl font-bold text-gray-800 leading-relaxed">Loading a kind note…</p>
+                  <p className={`text-2xl font-bold leading-relaxed ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>
+                    Loading a kind note…
+                  </p>
                 )}
                 {msgError && !msgLoading && (
-                  <p className="text-2xl font-bold text-red-700 leading-relaxed">
+                  <p className={`text-2xl font-bold leading-relaxed ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>
                     Could not load a note. Please try again.
                   </p>
                 )}
                 {!msgLoading && !msgError && (
-                  <p className="text-2xl font-bold text-gray-800 leading-relaxed">
+                  <p className={`text-2xl font-bold leading-relaxed ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>
                     {encouragement ?? 'No notes yet for this route. Be the first to leave one!'}
                   </p>
                 )}
 
-                <p className="text-base text-gray-600">
-                  Starting from <span className="font-semibold text-gray-800">{startLocation}</span> and heading to{' '}
-                  <span className="font-semibold text-gray-800">{destination}</span>.
+                <p className={`text-base ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+                  Starting from{' '}
+                  <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>{startLocation}</span> and
+                  heading to{' '}
+                  <span className={`font-semibold ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>{destination}</span>.
                 </p>
               </section>
 
@@ -839,13 +861,23 @@ const App = () => {
           )}
 
           {stage === 'map' && routeResult && (
-            <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+            <div className={stageCardClasses}>
               {renderHeader('Follow the highlighted path to reach your destination!')}
 
-              <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 space-y-3">
-                <p className="text-base font-semibold text-gray-800">{routeResult.summary}</p>
+              <div
+                className={`rounded-xl px-5 py-4 space-y-3 transition-colors duration-500 ${
+                  isDarkMode ? 'border border-slate-800 bg-slate-900/60' : 'border border-gray-200 bg-gray-50'
+                }`}
+              >
+                <p className={`text-base font-semibold ${isDarkMode ? 'text-slate-100' : 'text-gray-800'}`}>
+                  {routeResult.summary}
+                </p>
                 {routeResult.steps && (
-                  <ol className="list-decimal list-inside space-y-2 text-base text-gray-600">
+                  <ol
+                    className={`list-decimal list-inside space-y-2 text-base ${
+                      isDarkMode ? 'text-slate-300' : 'text-gray-600'
+                    }`}
+                  >
                     {routeResult.steps.map((step, index) => (
                       <li key={`route-step-${index}`}>{step}</li>
                     ))}
@@ -855,8 +887,12 @@ const App = () => {
                   <div
                     className={`rounded-lg border px-3 py-2 text-base font-medium ${
                       locationStatus.type === 'error'
-                        ? 'border-red-200 bg-red-50 text-red-700'
-                        : 'border-blue-200 bg-blue-50 text-blue-700'
+                        ? isDarkMode
+                          ? 'border-red-500/40 bg-red-500/10 text-red-200'
+                          : 'border-red-200 bg-red-50 text-red-700'
+                        : isDarkMode
+                          ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
+                          : 'border-blue-200 bg-blue-50 text-blue-700'
                     }`}
                   >
                     {locationStatus.message}
@@ -864,9 +900,13 @@ const App = () => {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
+              <div
+                className={`rounded-2xl px-5 py-4 transition-colors duration-500 ${
+                  isDarkMode ? 'border border-slate-800 bg-slate-900/60' : 'border border-gray-200 bg-gray-50'
+                }`}
+              >
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <p className="text-sm font-semibold text-gray-700">Map view</p>
+                  <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-gray-700'}`}>Map view</p>
                   <div className="flex flex-wrap gap-2">
                     {Object.values(mapLayerOptions).map((layer) => {
                       const isActiveLayer = selectedMapLayer.id === layer.id;
@@ -876,8 +916,12 @@ const App = () => {
                           type="button"
                           className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                             isActiveLayer
-                              ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
-                              : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600'
+                              ? isDarkMode
+                                ? 'border-blue-400 bg-blue-950/40 text-blue-200 shadow-inner'
+                                : 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                              : isDarkMode
+                                ? 'border-slate-700 bg-slate-900/70 text-slate-200 hover:border-blue-400 hover:text-blue-200'
+                                : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600'
                           }`}
                           aria-pressed={isActiveLayer}
                           onClick={() => setActiveMapLayer(layer.id)}
@@ -890,7 +934,11 @@ const App = () => {
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-lg">
+              <div
+                className={`overflow-hidden rounded-2xl shadow-lg transition-colors duration-500 ${
+                  isDarkMode ? 'border border-slate-800' : 'border border-gray-200'
+                }`}
+              >
                 <MapContainer
                   center={mapCenter}
                   zoom={17}
@@ -920,7 +968,13 @@ const App = () => {
               </div>
 
               {completionStatus && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-base text-red-700">
+                <div
+                  className={`rounded-xl border px-4 py-3 text-base ${
+                    isDarkMode
+                      ? 'border-red-500/40 bg-red-500/10 text-red-200'
+                      : 'border-red-200 bg-red-50 text-red-700'
+                  }`}
+                >
                   {completionStatus.message}
                 </div>
               )}
@@ -941,11 +995,14 @@ const App = () => {
           )}
 
           {stage === 'completion' && (
-            <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+            <div className={stageCardClasses}>
               {renderHeader("Route Completed! Would you like to brighten someone else's walk?")}
 
               <form className="space-y-4" onSubmit={handleSendMessage}>
-                <label htmlFor="kindMessage" className="block text-base font-semibold text-gray-700">
+                <label
+                  htmlFor="kindMessage"
+                  className={`block text-base font-semibold ${isDarkMode ? 'text-slate-100' : 'text-gray-700'}`}
+                >
                   Leave a Message (optional)
                 </label>
                 <textarea
@@ -962,12 +1019,16 @@ const App = () => {
                   }
                   className={`w-full rounded-xl border px-4 py-3 text-base focus:outline-none focus:ring-2 transition-all ${
                     hasSubmittedMessage
-                      ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:ring-blue-200'
+                      ? isDarkMode
+                        ? 'border-slate-800 bg-slate-900/40 text-slate-500 cursor-not-allowed'
+                        : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : isDarkMode
+                        ? 'border-slate-700 bg-slate-900/40 text-slate-100 focus:border-blue-400 focus:ring-blue-900/40'
+                        : 'border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:ring-blue-200'
                   }`}
                 />
                 {!hasSubmittedMessage && (
-                  <p className="text-sm text-gray-500">
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
                     {userMessage.length}/{MESSAGE_MAX_LENGTH} characters (max)
                   </p>
                 )}
@@ -976,9 +1037,15 @@ const App = () => {
                   <div
                     className={`rounded-xl px-4 py-3 text-base font-medium ${
                       submissionStatus.type === 'success'
-                        ? 'bg-green-50 text-green-700 border border-green-200'
-                        : submissionStatus.type === 'error'
-                          ? 'bg-red-50 text-red-700 border border-red-200'
+                        ? isDarkMode
+                          ? 'border border-green-500/40 bg-green-500/10 text-green-200'
+                          : 'bg-green-50 text-green-700 border border-green-200'
+                      : submissionStatus.type === 'error'
+                        ? isDarkMode
+                          ? 'border border-red-500/40 bg-red-500/10 text-red-200'
+                          : 'bg-red-50 text-red-700 border border-red-200'
+                        : isDarkMode
+                          ? 'border border-blue-500/40 bg-blue-500/10 text-blue-200'
                           : 'bg-blue-50 text-blue-700 border border-blue-200'
                     }`}
                   >
@@ -986,16 +1053,24 @@ const App = () => {
                   </div>
                 )}
 
-                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 text-base text-blue-800">
+                <div
+                  className={`rounded-xl border px-4 py-4 text-base transition-colors duration-500 ${
+                    isDarkMode
+                      ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
+                      : 'border-blue-200 bg-blue-50 text-blue-800'
+                  }`}
+                >
                   <p className="font-semibold">We'd love your feedback!</p>
-                  <p className="mt-1 text-sm text-blue-700">
+                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-blue-100' : 'text-blue-700'}`}>
                     Help us enhance MavWalk by taking a quick survey about your experience.
                   </p>
                   <a
                     href="https://docs.google.com/forms/d/e/1FAIpQLScs3F9rVS34BXsj1uKQu4iI-0681Q3Jljz9cN1182Hbw6CSGg/viewform"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                    className={`mt-3 inline-block rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors ${
+                      isDarkMode ? 'bg-blue-500 hover:bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
                   >
                     Take the survey
                   </a>
@@ -1006,7 +1081,9 @@ const App = () => {
                     type="submit"
                     className={`w-full rounded-xl px-6 py-4 text-white text-lg font-bold shadow-lg transition-all duration-200 ${
                       hasSubmittedMessage
-                        ? 'bg-gray-400 cursor-not-allowed'
+                        ? isDarkMode
+                          ? 'bg-slate-700 cursor-not-allowed'
+                          : 'bg-gray-400 cursor-not-allowed'
                         : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
                     }`}
                     disabled={isSavingMessage || hasSubmittedMessage}
@@ -1017,7 +1094,11 @@ const App = () => {
                   <button
                     type="button"
                     onClick={resetJourney}
-                    className="w-full rounded-xl border-2 border-orange-500 px-6 py-4 text-orange-500 text-lg font-bold hover:bg-orange-50 transition-all duration-200"
+                    className={`w-full rounded-xl border-2 px-6 py-4 text-lg font-bold transition-all duration-200 ${
+                      isDarkMode
+                        ? 'border-orange-400 text-orange-200 hover:bg-orange-500/10'
+                        : 'border-orange-500 text-orange-500 hover:bg-orange-50'
+                    }`}
                   >
                     Finish
                   </button>
