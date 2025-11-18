@@ -36,7 +36,7 @@ const {
 } = require('./validation');
 const { createProfanityMiddleware } = require('./middleware/profanity-middleware');
 
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 let databaseInitialized = false;
 
@@ -460,7 +460,7 @@ const createApp = () => {
 if (require.main === module) {
     const app = createApp();
     app.listen(port, () => {
-        console.log(`MavWalk server (v3) listening at http://localhost:${port}`);
+        console.log(`MavWalk server (v3) listening on port ${port}`);
     });
 }
 
